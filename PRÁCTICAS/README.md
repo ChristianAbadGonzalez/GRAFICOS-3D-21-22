@@ -1,0 +1,2 @@
+Bienvenido a mi repositorio de prácticas de la asignatura de Gráficos y Visualización en 3D,
+del Grado de Ingeniería de Sistemas Audiovisuales y Multimedia, de la Universidad Rey Juan Carlos de Madrid.
