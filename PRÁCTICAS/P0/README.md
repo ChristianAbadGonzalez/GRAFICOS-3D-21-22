@@ -1,0 +1,1 @@
+Vamos a comenzar a realizar la práctica P0 de la asignatura en cuestión.
