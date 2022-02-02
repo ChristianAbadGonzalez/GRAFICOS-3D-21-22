@@ -662,5 +662,143 @@ Dado que JavaScript trata el guión bajo como una letra, los identificadores que
 
 Usar el guión bajo no es muy común en JavaScript,  
 pero una convención entre los programadores profesionales  
-es usarlo como un alias para las variables "privadas (ocultas)".
+es usarlo como un alias para las variables "privadas (ocultas)".  
+*** 
+
+## FUNCIONES EN JAVASCRIPT
+
+Una función de JavaScript es un bloque de código diseñado para realizar una tarea en particular.  
+
+Una función de JavaScript se ejecuta cuando "algo" la invoca (lo llama).  
+
+    function myFunction(p1, p2) {  
+      return p1 * p2;   
+      // The function returns the product of p1 and p2  
+    }  
+***
+## SINTAXIS DE FUNCIONES EN JAVASCRIPT  
+Una función de JavaScript se define con la functionpalabra clave, seguida de un nombre , seguido de paréntesis () .  
+
+Los nombres de funciones pueden contener letras, dígitos, subrayados y signos de dólar (las mismas reglas que las variables).  
+
+Los paréntesis pueden incluir nombres de parámetros separados por comas:
+( parámetro1, parámetro2, ... ).  
+
+El código a ejecutar, por la función, se coloca entre corchetes: {}  
+
+    function name(parameter1, parameter2, parameter3) {  
+      
+      // code to be executed  
+    
+    }  
+
+Los parámetros de la función se enumeran entre paréntesis () en la definición de la función.  
+
+Los argumentos de la función son los valores recibidos por la función cuando se invoca.  
+
+Dentro de la función, los argumentos (los parámetros) se comportan como variables locales.  
+
+Una función es muy similar a un procedimiento o una subrutina, en otros lenguajes de programación.  
+***
+
+## INVOCACIÓN DE FUNCIONES  
+El código dentro de la función se ejecutará cuando "algo" invoque (llame) a la función:
+
+1. Cuando ocurre un evento (cuando un usuario hace clic en un botón).  
+
+2. Cuando se invoca (llama) desde código JavaScript.  
+
+3. Automáticamente (auto invocado).  
+***  
+
+## RETORNO DE LA FUNCIÓN  
+Cuando JavaScript llega a una returndeclaración,  
+la función dejará de ejecutarse.
+
+Si la función se invocó desde una declaración, JavaScript  
+"regresará" para ejecutar el código después de la declaración de invocación.
+
+Las funciones suelen calcular un valor de retorno.  
+El valor de retorno se "devuelve" a la "persona que llama":  
+
+    let x = myFunction(4, 3);   
+    // Function is called, return value will end up in x  
+    
+    function myFunction(a, b) {  
+      return a * b;  
+      // Function returns the product of a and b  
+    }  
+
+    x = 12;  
+***  
+
+## ¿POR QUÉ FUNCIONES?  
+
+Puede reutilizar el código: defina el código una vez  
+y utilícelo muchas veces.
+
+Puede usar el mismo código muchas veces con diferentes argumentos  
+para producir resultados diferentes.  
+
+    Convertir Fahrenheit a Celsius:  
+        function toCelsius(fahrenheit) {  
+          return (5/9) * (fahrenheit-32);  
+        }  
+        
+        document.getElementById("demo").innerHTML = toCelsius(77);  
+***  
+## OPERADOR "()" QUE INVOCA A LAS FUNCIONES  
+
+Usando el ejemplo anterior, toCelsius se refiere al objeto de la función  
+y toCelsius() se refiere al resultado de la función.
+
+Acceder a una función sin () devolverá el objeto de la función  
+en lugar del resultado de la función.  
+
+    function toCelsius(fahrenheit) {
+      return (5/9) * (fahrenheit-32);
+    }
+    
+    document.getElementById("demo").innerHTML = toCelsius;  
+***  
+## FUNCIONES USADAS COMO VALORES DE VARIABLES  
+Las funciones se pueden usar de la misma manera que se usan las variables,  
+en todo tipo de fórmulas, asignaciones y cálculos.  
+
+    En lugar de usar una variable para almacenar el valor de retorno de una función:
+
+    let x = toCelsius(77);
+    
+    let text = "The temperature is " +  x  +  " Celsius";
+
+    o
+
+    Puede usar la función directamente, como un valor variable:
+
+    let text = "The temperature is " + toCelsius(77) + " Celsius";  
+***
+## VARIABLES LOCALES  
+Las variables declaradas dentro de una función de JavaScript  
+se vuelven LOCALES para la función.  
+
+Solo se puede acceder a las variables locales desde dentro de la función.  
+
+    // code here can NOT use carName
+
+    function myFunction() {
+      
+      let carName = "Volvo";
+      
+      // code here CAN use carName
+    }
+
+    // code here can NOT use carName  
+    
+Dado que las variables locales solo se reconocen dentro de sus funciones,  
+las variables con el mismo nombre se pueden usar en diferentes funciones.
+
+Las variables locales se crean cuando se inicia una función  
+y se eliminan cuando se completa la función.
+
+## HOLA
 
