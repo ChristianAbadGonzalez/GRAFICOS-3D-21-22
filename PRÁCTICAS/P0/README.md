@@ -799,6 +799,3 @@ las variables con el mismo nombre se pueden usar en diferentes funciones.
 
 Las variables locales se crean cuando se inicia una función  
 y se eliminan cuando se completa la función.
-
-## HOLA
-
