@@ -436,3 +436,231 @@ Este ejemplo utiliza una ruta de archivo para vincular a myScript.js.
       <script src="myScript.js"></script>
 
 Este ejemplo no usa una ruta para vincular a myScript.js:
+***
+## VARIABLES EN JAVASCRIPT:  
+Las variables son contenedores para almacenar datos (almacenar valores de datos).  
+
+En este ejemplo, x, y y z, son variables declaradas con la  palabra clave "var":  
+
+### EJEMPLOS:  
+    var x = 5;  
+    var y = 6;  
+    var z = x + y;  
+***  
+En este ejemplo, x, y y z, son variables declaradas con la palabra clave "let":  
+
+    let x = 5;  
+    let y = 6;  
+    let z = x + y;
+***  
+En este ejemplo, x, y y z, son variables no declaradas:  
+    
+    x = 5;  
+    y = 6;  
+    z = x + y;
+***  
+## ¿CUÁNDO USAR "VAR" EN JAVASCRIPT?  
+Declare siempre las variables de JavaScript con var, let o const.  
+
+La palabra clave "var" se usa en todo el código JavaScript desde 1995 hasta 2015.  
+
+Las palabras clave let y const se agregaron a JavaScript en 2015.  
+
+Si desea que su código se ejecute en un navegador anterior, debe usar var.  
+***
+## ¿CUÁNDO USAR "CONST" EN JAVASCRIPT?  
+Si quieres una regla general: declara siempre las variables con const.
+
+Si cree que el valor de la variable puede cambiar, use let.
+
+En este ejemplo, price1, price2y total, son variables:  
+### EJEMPLO:  
+    const price1 = 5;  
+    const price2 = 6;  
+    let total = price1 + price2;  
+Las dos variables price1y price2 se declaran con la constpalabra clave.
+
+Estos son valores constantes y no se pueden cambiar.
+
+La variable totalse declara con la letpalabra clave.
+
+Este es un valor que se puede cambiar.  
+***  
+## ¡¡ALGEBRA EN JAVASCRIPT!!  
+Al igual que en álgebra, las variables tienen valores:  
+    
+    let x = 5;  
+    let y = 6;  
+Al igual que en álgebra, las variables se usan en expresiones:  
+
+    let z = x + y;  
+
+## ¡NOTA!: Las variables son contenedores para almacenar valores.  
+***  
+## IDENTIFICADORES EN JAVASCRIPT.  
+Todas las variables de JavaScript deben identificarse con nombres únicos .
+
+Estos nombres únicos se denominan identificadores .
+
+Los identificadores pueden ser nombres cortos (como x e y) o nombres más descriptivos (edad, suma, volumen total).
+
+Las reglas generales para construir nombres para variables (identificadores únicos) son:
+
+1. Los nombres pueden contener letras, dígitos, guiones bajos y signos de dólar.  
+2. Los nombres deben comenzar con una letra.  
+3. Los nombres también pueden comenzar con $ y _ (pero no lo usaremos en este tutorial).  
+4. Los nombres distinguen entre mayúsculas y minúsculas (y e Y son variables diferentes).  
+5. Las palabras reservadas (como las palabras clave de JavaScript) no se pueden usar como nombres.  
+
+## ¡NOTA!: Los identificadores de JavaScript distinguen entre mayúsculas y minúsculas.  
+***  
+## OPERADOR ASIGNACIÓN "=":  
+En JavaScript, el signo igual ( =) es un operador de "asignación", no un operador "igual a".
+
+Esto es diferente del álgebra. Lo siguiente no tiene sentido en álgebra.  
+
+    x = x + 5  
+
+En JavaScript, sin embargo, tiene mucho sentido: asigna el valor de x + 5 a x.  
+
+(Calcula el valor de x + 5 y pone el resultado en x. El valor de x se incrementa en 5).  
+
+## ¡NOTA!: El operador "igual a" se escribe como "==" en JavaScript.  
+
+***  
+## TIPOS DE DATOS EN JAVASCRIPT.  
+Las variables de JavaScript pueden contener números como 100 y valores de texto como "John Doe".  
+
+En programación, los valores de texto se denominan cadenas de texto.  
+
+JavaScript puede manejar muchos tipos de datos, pero por ahora, solo piense en números y cadenas.  
+
+Las cadenas se escriben entre comillas simples o dobles. Los números se escriben sin comillas.  
+
+Si pone un número entre comillas, se tratará como una cadena de texto.  
+
+    const pi = 3.14;  
+    let person = "John Doe";  
+    let answer = 'Yes I am!';  
+***  
+## DECLARAR UNA VARIABLE EN JAVASCRIPT  
+
+Crear una variable en JavaScript se llama "declarar" una variable.  
+
+Declaras una variable de JavaScript con varo la letpalabra clave:  
+
+    var carName;  
+    o  
+    let carName;  
+
+Después de la declaración, la variable no tiene valor (técnicamente lo es undefined).  
+
+Para asignar un valor a la variable, utilice el signo igual:  
+
+    carName = "Volvo";  
+También puede asignar un valor a la variable cuando la declara:  
+
+    let carName = "Volvo";  
+
+En el siguiente ejemplo, creamos una variable llamada carNamey le asignamos el valor "Volvo".  
+
+Luego, "damos salida" al valor dentro de un párrafo HTML con id="demo":  
+
+    <p id="demo"></p>  
+    
+    <script>  
+      
+      let carName = "Volvo";  
+      document.getElementById("demo").innerHTML = carName;  
+    
+    </script>  
+
+### ¡NOTA!: Es una buena práctica de programación declarar todas las variables al comienzo de un script.
+
+***
+## UNA DECLARACIÓN -- MUCHAS VARIABLES  
+
+Puede declarar muchas variables en una declaración.  
+
+Comience la declaración con vary separe las variables con comas:  
+
+    let person = "John Doe", carName = "Volvo", price = 200;
+
+Una declaración puede abarcar varias líneas:  
+
+    let person = "John Doe",  
+    carName = "Volvo",  
+    price = 200;  
+
+***
+## VALOR INDEFINIDO -- (UNDEFINED)  
+En los programas de computadora, las variables a menudo se declaran sin valor. El valor puede ser algo que debe calcularse o algo que se proporcionará más adelante, como una entrada del usuario.  
+
+Una variable declarada sin valor tendrá el valor undefined.  
+
+La variable carName tendrá el valor undefineddespués de la ejecución de esta declaración:  
+
+    let carName;  
+***
+## REDECLARACIÓN DE VARIABLES EN JAVASCRIPT  
+
+Si vuelve a declarar una variable de JavaScript declarada con "var", no perderá su valor.  
+
+La variable carNameseguirá teniendo el valor "Volvo" después de la ejecución de estas sentencias:  
+
+    var carName = "Volvo";  
+    var carName;  
+
+### ¡NOTA! No puede volver a declarar una variable declarada con let o const.  
+
+    ¡¡ESTO NO FUNCIONARA!!  
+
+      let carName = "Volvo";  
+      let carName;  
+***
+## ARITMETICA EN JAVASCRIPT  
+Al igual que con el álgebra, puedes hacer operaciones aritméticas con variables de JavaScript,  
+usando operadores como = y +:  
+
+    let x = 5 + 2 + 3;  
+
+    let x = "John" + " " + "Doe";  --> Resultado: John Doe.
+
+    let x = "5" + 2 + 3;  --> Resultado: 55.  
+
+### ¡NOTA! Si se pone un número o nombre entre comillas, el resto de los números o nombres se tratarán como cadenas y se concatenarán.  
+
+***  
+## SIMBOLO "$" EN JAVASCRIPT  
+
+Dado que JavaScript trata un signo de dólar como una letra,  
+los identificadores que contienen $ son nombres de variables válidos:  
+
+    let $ = "Hello World";  
+    
+    let $$$ = 2;  
+    
+    let $myMoney = 5;  
+
+Usar el signo de dólar no es muy común en JavaScript,  
+pero los programadores profesionales a menudo lo usan como un alias  
+para la función principal en una biblioteca de JavaScript.
+
+En la biblioteca JavaScript jQuery, por ejemplo,  
+la función principal "DOLAR" se usa para seleccionar elementos HTML.  
+En jQuery "DOLAR("p")"; significa "seleccionar todos los elementos p".  
+***  
+## GUIÓN BAJO "_" EN JAVASCRIPT
+
+Dado que JavaScript trata el guión bajo como una letra, los identificadores que contienen "_" son nombres de variables válidos:  
+
+    let _lastName = "Johnson";  
+    
+    let _x = 2;  
+    
+    let _100 = 5;  
+
+Usar el guión bajo no es muy común en JavaScript,  
+pero una convención entre los programadores profesionales  
+es usarlo como un alias para las variables "privadas (ocultas)".
+
