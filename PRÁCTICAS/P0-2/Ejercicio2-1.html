@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Colorear un Canvas</title>
+</head>
+<body onload="init()">
+    <canvas id="myCanvas" width="1000" height="500"></canvas>
+</body>
+
+<script>
+    function init(){
+        var canvas = document.getElementById("myCanvas");
+        
+        /* Creación de Canvas en 2D y dentro de este elemento Canvas hemos creado una línea */
+        /*      var context = canvas.getContext("2d");
+                context.moveTo(0, 0);
+                context.lineTo(200, 100);
+                context.stroke(); 
+        */
+        
+        /* Canvas de color Rojo */
+        /*         var gl = canvas.getContext("webgl");
+                    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+                    gl.clear(gl.COLOR_BUFFER_BIT); 
+        */
+        
+        /* Canvas de color Negro */
+        /*         var gl = canvas.getContext("webgl");
+                    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+                    gl.clear(gl.COLOR_BUFFER_BIT); 
+        */
+
+       /* Canvas de color Rosa */
+       var gl = canvas.getContext("webgl");
+        gl.clearColor(1.0, 0.75, 0.79, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT); 
+    }
+</script>
+
+</html>
