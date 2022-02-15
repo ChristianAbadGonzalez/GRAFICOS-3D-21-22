@@ -12,25 +12,31 @@
 </body>
 
 <script id="shaderVs" type="x-shader/x-vertex">
+    attribute vec4 a_Position;
+    attribute float a_Size;
+    
     void main(){
-        gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
-        gl_PointSize = 10.0;
+        gl_Position = a_Position;
+        gl_PointSize = a_Size;
     }
 </script>
 
 <script id="shaderFs" type="x-shader/x-fragment">
+    precision mediump float;
+    uniform vec4 u_FragColor
+    
     void main(){
-        gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+        gl_FragColor = u_FragColor;
     }
 </script>
 
 <script>
     function init(){
 
-        /* Get canvas object from the DOM */
+        // Get canvas object from the DOM 
         var canvas = document.getElementById("myCanvas");
         
-        /* Init WebGL context */
+        // Init WebGL context
         var gl = canvas.getContext("webgl");
         
         if (!gl) {
@@ -38,43 +44,43 @@
             return;
         }
 
-        /* Init Shaders */
+        // Register event handler
+        canvas.onmousedown = function(ev) {
+            click(ev, gl, canvas);
+        };
+
+        //Set clear color 
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        
+        //Clear Canvas
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        // Init Shaders 
         var vs = document.getElementById("shaderVs").innerHTML;
         var fs = document.getElementById("shaderFs").innerHTML;
 
         if (!initShaders(gl, vs, fs)){
             console.log("FAILED TO INITIALIZE SHADERS.")
         }
+    }
 
-        /* Write the position of vertices to a vertex shader */              
-        var n = initVertexBuffer(gl);
-
-        if (n < 0){
-            console.log("FAILED TO SET THE POSITION OF THE VERTICES.");
-            return;
-        } 
-
-        /* Set clear color */
-        gl.clearColor(0.0, 0.0, 0.0, 1.0);
-        
-        /* Clear Canvas */        
-        gl.clear(gl.COLOR_BUFFER_BIT);
-
-        /* Draw */
+    /* ESTO QUE TENEMOS COMENTADO IRIA JUSTAMENTE DENTRO DE LA FUNCIÓN INIT() */ 
+        /*         
+        Draw
         gl.drawArrays(gl.Points, 0, n);
 
-    }
+        */
 
     function initShaders(gl, vs_source, fs_source){
     
-        /* Compile shaders */
+        // Compile shaders 
         var vertexShader = makeShader(gl, vs_source, gl.VERTEX_SHADER);
         var fragmentShader = makeShader(gl, fs_source, gl.FRAGMENT_SHADER);
 
-        /* Create Program */
+        // Create Program
         var glProgram = gl.createProgram();
 
-        /* Attach and link shaders to the program */
+        // Attach and link shaders to the program 
         gl.attachShader(glProgram, vertexShader);
         gl.attachShader(glProgram, fragmentShader);
         gl.linkProgram(glProgram);
@@ -103,35 +109,45 @@
         }
         return shader;
     }
+</script>
 
-    function initVertexBuffer(gl){
+<script>
+    
+    var coordinates = [];
+    var color_rgba = [];
+    var size = []
 
-        /* Vertex */
-        var dim = n;
-        var vertices = new Float32Array([]);
+    // Get canvas object from the DOM 
+    var canvas = document.getElementById("myCanvas");
+    
+    // Init WebGL context
+    var gl = canvas.getContext("webgl");
+        
+    function click(ev, gl, canvas) {
+    
+        // Coordinates of canvas origin
+        var rect = ev.target.getBoundingClientRect();
+    
+        // relative x coordinate of click in canvas
+        var clickX = ev.clientX - rect.left;
+    
+        // relative y coordinate of click in canvas
+        var clickY = ev.clientY - rect.top;
+        
+        // WebGL coordinates (3D)
+        var halfCanvasWidth = canvas.width / 2;
+        var halfCanvasHeight = canvas.height / 2;
+        var x = (clickX - halfCanvasWidth) / halfCanvasWidth;
+        var y = (halfCanvasHeight - clickY) / halfCanvasHeight;
+        var xyz = [x, y, 0];
 
-        /* Create a buffer object */
-        var vertexBuffer = gl.createBuffer();
-
-        if (!vertexBuffer){
-            console.log("FAILED TO CREATE THE BUFFER OBJECT.");
-            return - 1;
-        }
-
-        /* Connect buffer to the shaders */
-        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-
-        /* Assign the vertices in buffer object to a_Position variable */
-        var gl_Position = gl.getAttribLocation(gl.program, 'gl_Position');
-
-        if (gl_Position < 0){
-            console.log("FAILED TO GET THE STORAGE LOCATION OF gl_Position");
-            return - 1;
-        }
-
-        gl.VertexAttrubPointer(gl_Position, dim, gl.FLOAT, false, 0, 0);
-
+        // Event on click in canvas and push the point to memory
+        coordinates.push(xyz)
+        var a_Position = gl.getAttributLocation(gl.program, 'a_Position');
+        
+        // Point Distance
+        var distance = 20*(Math.sqrt(Math.pow(x,2) + Math.pow(y,2)));
+        console.log(distance);
     }
 </script>
 
