@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ejercicio Evaluable 3</title>
+</head>
+
+<body onload="init()">
+    <canvas id="myCanvas" width="1000" height="500"></canvas>
+</body>
+
+<script id="shaderVs" type="x-shader/x-vertex">
+    void main(){
+        gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
+        gl_PointSize = 10.0;
+    }
+</script>
+
+<script id="shaderFs" type="x-shader/x-fragment">
+    void main(){
+        gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    }
+</script>
+
+<script>
+    function init(){
+
+        /* Get canvas object from the DOM */
+        var canvas = document.getElementById("myCanvas");
+        
+        /* Init WebGL context */
+        var gl = canvas.getContext("webgl");
+        
+        if (!gl) {
+            console.log("FAILED TO GET THE RENDERING CONTEXT FOR WEBGL.");
+            return;
+        }
+
+        /* Init Shaders */
+        var vs = document.getElementById("shaderVs").innerHTML;
+        var fs = document-getElementById("shaderFs").innerHTML;
+
+        if (!initShaders(gl, vs, fs)){
+            console.log("FAILED TO INITIALIZE SHADERS.")
+        }
+
+        /* Write the position of vertices to a vertex shader */              
+        var n = initVertexBuffer(gl);
+
+        if (n < 0){
+            console.log("FAILED TO SET THE POSITION OF THE VERTICES.");
+            return;
+        }
+
+        /* Draw */
+        gl.drawArrays(gl.Points, 0, 1);
+
+        /* Set clear color */
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        
+        /* Clear Canvas */        
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+
+    }
+</script>
+
+<script>
+    function initShaders(gl, vs_source, fs_source){
+    
+        /* Compile shaders */
+        var vertexShader = makeShader(gl, vs_source, gl.VERTEX_SHADER);
+        var fragmentShader = makeShader(gl, fs_source, gl.FRAGMENT_SHADER);
+
+        /* Create Program */
+        var glProgram = gl.createProgram();
+
+        /* Attach and link shaders to the program */
+        gl.attachShader(glProgram, vertexShader);
+        gl.attachShader(glProgram, fragmentShader);
+        gl.linkProgram(glProgram);
+
+        if (!gl.getProgramParametre(glProgram, gl.LINK_STATUS)){
+            alert("UNABLE TO INITIALIZA THE SHADER PROGRAM");
+            return false;
+        }
+
+        /* Use Program */
+        gl.useProgram(glProgram);
+        gl.program = glProgram;
+
+        return true;
+    }
+
+    function makeShader(gl, src, type){
+        
+        var shader = gl.createShader(type);
+        gl.shaderSource(shader, src);
+        gl.compileShader(shader)
+        
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)){
+            alert("ERROR COMPILE SHADER: " + gl.getShaderInfoLog(shader));
+            return;
+        }
+        return shader;
+    }
+</script>
+
+</html>
