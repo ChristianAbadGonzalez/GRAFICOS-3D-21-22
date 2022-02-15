@@ -8,6 +8,7 @@
 </head>
 <body onload="init()">
     <canvas id="myCanvas" width="1000" height="500"></canvas>
+    <!-- El canvas tiene un identificador (id="myCanvas") y unas propiedades de ancho y alto (width="1000" heigth="500") -->
 </body>
 
 <script>
@@ -23,7 +24,7 @@
         
         /* Canvas de color Rojo */
         /*         var gl = canvas.getContext("webgl");
-                    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+                    gl.clearColor(1.0, 0.0, 0.0, 1.0);
                     gl.clear(gl.COLOR_BUFFER_BIT); 
         */
         
@@ -35,6 +36,13 @@
 
        /* Canvas de color Rosa */
        var gl = canvas.getContext("webgl");
+       
+       if (!gl) {
+            console.log("Failed to get the rendering context for WebGL");
+            return;
+        }
+
+        /* Clear Canvas */
         gl.clearColor(1.0, 0.75, 0.79, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT); 
     }
