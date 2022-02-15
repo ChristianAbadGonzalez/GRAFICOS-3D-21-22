@@ -38,12 +38,6 @@
             return;
         }
 
-        /* Set clear color */
-        gl.clearColor(0.0, 0.0, 0.0, 1.0);
-        
-        /* Clear Canvas */        
-        gl.clear(gl.COLOR_BUFFER_BIT);
-
         /* Init Shaders */
         var vs = document.getElementById("shaderVs").innerHTML;
         var fs = document.getElementById("shaderFs").innerHTML;
@@ -53,16 +47,21 @@
         }
 
         /* Write the position of vertices to a vertex shader */              
-        /* var n = initVertexBuffer(gl);
+        var n = initVertexBuffer(gl);
 
         if (n < 0){
             console.log("FAILED TO SET THE POSITION OF THE VERTICES.");
             return;
         } 
-        */
+
+        /* Set clear color */
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        
+        /* Clear Canvas */        
+        gl.clear(gl.COLOR_BUFFER_BIT);
 
         /* Draw */
-        gl.drawArrays(gl.Points, 0, 1);
+        gl.drawArrays(gl.Points, 0, n);
 
     }
 
@@ -103,6 +102,36 @@
             return;
         }
         return shader;
+    }
+
+    function initVertexBuffer(gl){
+
+        /* Vertex */
+        var dim = n;
+        var vertices = new Float32Array([]);
+
+        /* Create a buffer object */
+        var vertexBuffer = gl.createBuffer();
+
+        if (!vertexBuffer){
+            console.log("FAILED TO CREATE THE BUFFER OBJECT.");
+            return - 1;
+        }
+
+        /* Connect buffer to the shaders */
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+        /* Assign the vertices in buffer object to a_Position variable */
+        var gl_Position = gl.getAttribLocation(gl.program, 'gl_Position');
+
+        if (gl_Position < 0){
+            console.log("FAILED TO GET THE STORAGE LOCATION OF gl_Position");
+            return - 1;
+        }
+
+        gl.VertexAttrubPointer(gl_Position, dim, gl.FLOAT, false, 0, 0);
+
     }
 </script>
 
