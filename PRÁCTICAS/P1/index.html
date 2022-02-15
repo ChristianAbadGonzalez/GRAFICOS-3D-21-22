@@ -38,36 +38,34 @@
             return;
         }
 
-        /* Init Shaders */
-        var vs = document.getElementById("shaderVs").innerHTML;
-        var fs = document-getElementById("shaderFs").innerHTML;
-
-        if (!initShaders(gl, vs, fs)){
-            console.log("FAILED TO INITIALIZE SHADERS.")
-        }
-
-        /* Write the position of vertices to a vertex shader */              
-        var n = initVertexBuffer(gl);
-
-        if (n < 0){
-            console.log("FAILED TO SET THE POSITION OF THE VERTICES.");
-            return;
-        }
-
-        /* Draw */
-        gl.drawArrays(gl.Points, 0, 1);
-
         /* Set clear color */
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         
         /* Clear Canvas */        
         gl.clear(gl.COLOR_BUFFER_BIT);
 
+        /* Init Shaders */
+        var vs = document.getElementById("shaderVs").innerHTML;
+        var fs = document.getElementById("shaderFs").innerHTML;
+
+        if (!initShaders(gl, vs, fs)){
+            console.log("FAILED TO INITIALIZE SHADERS.")
+        }
+
+        /* Write the position of vertices to a vertex shader */              
+        /* var n = initVertexBuffer(gl);
+
+        if (n < 0){
+            console.log("FAILED TO SET THE POSITION OF THE VERTICES.");
+            return;
+        } 
+        */
+
+        /* Draw */
+        gl.drawArrays(gl.Points, 0, 1);
 
     }
-</script>
 
-<script>
     function initShaders(gl, vs_source, fs_source){
     
         /* Compile shaders */
@@ -82,8 +80,8 @@
         gl.attachShader(glProgram, fragmentShader);
         gl.linkProgram(glProgram);
 
-        if (!gl.getProgramParametre(glProgram, gl.LINK_STATUS)){
-            alert("UNABLE TO INITIALIZA THE SHADER PROGRAM");
+        if (!gl.getProgramParameter(glProgram, gl.LINK_STATUS)){
+            alert("UNABLE TO INITIALIZE THE SHADER PROGRAM");
             return false;
         }
 
