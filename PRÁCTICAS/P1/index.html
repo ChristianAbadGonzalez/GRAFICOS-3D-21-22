@@ -160,8 +160,32 @@
         var green = (0.0, 1.0, 0.0, 1.0);
         var blue = (0.0, 0.0, 1.0, 1.0);
         var yellow = (1.0, 0.91, 0.0, 1.0);
+        var white = (0.0, 0.0, 0.0, 0.0);
 
+        // Declaration of extreme point --> Operation Logical OR
+        if (x > 0.7 || x < -0.7 || y > 0.7 || y < -0.7){
+            color_rgba.push(white);
+            size.push(distance);
+        }else if(high_right){
+            color_rgba.push(yellow);
+            size.push(distance);
+        }else if(low_right){
+            color_rgba.push(green);
+            size.push(distance);
+        }else if(high_left){
+            color_rgba.push(blue);
+            size.push(distance);
+        }else if(low_left){
+            color_rgba.push(red);
+            size.push(distance);
+        }
     }
+
+    //Set clear color 
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        
+    //Clear Canvas
+    gl.clear(gl.COLOR_BUFFER_BIT);
 </script>
 
 </html>
