@@ -144,10 +144,23 @@
         // Event on click in canvas and push the point to memory
         coordinates.push(xyz)
         var a_Position = gl.getAttributLocation(gl.program, 'a_Position');
-        
+
         // Point Distance
         var distance = 20*(Math.sqrt(Math.pow(x,2) + Math.pow(y,2)));
         console.log(distance);
+
+        // Plane Coordinates
+        var high_right = (x >= 0) && (y >= 0);
+        var low_right = (x >= 0) && (y <= 0);
+        var high_left = (x <= 0) && (y >= 0);
+        var low_left = (x <= 0) && (y <= 0);
+
+        // Colors I Need --> RGB + YELLOW + WHITE
+        var red = (1.0, 0.0, 0.0, 1.0);
+        var green = (0.0, 1.0, 0.0, 1.0);
+        var blue = (0.0, 0.0, 1.0, 1.0);
+        var yellow = (1.0, 0.91, 0.0, 1.0);
+
     }
 </script>
 
