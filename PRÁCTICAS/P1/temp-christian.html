@@ -35,13 +35,6 @@
         color_rgba = [],
         size = [];
 
-    // Colors I Need  RGB + YELLOW + WHITE
-    var red = [1.0, 0.0, 0.0],
-        green = [0.0, 1.0, 0.0],
-        blue = [0.0, 0.0, 1.0],
-        yellow = [1.0, 1.0, 0.0],
-        white = [0.0, 0.0, 0.0];
-
     function init(){
 
         // Get canvas object from the DOM and Init WebGL Context
@@ -72,9 +65,15 @@
         }
     }
 
+        // Colors I Need  RGB + YELLOW + WHITE
+        var red = [1.0, 0.0, 0.0],
+            green = [0.0, 1.0, 0.0],
+            blue = [0.0, 0.0, 1.0],
+            yellow = [1.0, 1.0, 0.0],
+            white = [0.0, 0.0, 0.0];
+
     // Click Event Execution Function
     function click(ev, gl, canvas) {
-
         var [x, y, z] = getPosition(ev, canvas);
 
         // Event on click in canvas and push the point to memory
@@ -110,14 +109,13 @@
         size.push(distance);
 
         var a_Position = gl.getAttribLocation(gl.program, "a_Position"),
+            a_PSize = gl.getAttribLocation(gl.program, "a_PSize"),
             u_FragColor = gl.getUniformLocation(gl.program, "u_FragColor");
 
         if(u_FragColor < 0){
             console.log('FAILED TO GET THE STORAGE LOCATION OF u_FragColor');
             return -1;
         }
-
-        var a_PSize = gl.getAttribLocation(gl.program, "a_PSize");
 
         for (let i = 0; i < coordinates.length; i++) {
             drawPoint(gl, a_Position, a_PSize, u_FragColor, coordinates[i], size[i], color_rgba[i]);            
@@ -126,20 +124,19 @@
 
     function getPosition(ev, canvas){
 
-        // Coordinates of canvas origin
-        var rect = ev.target.getBoundingClientRect();
+        // 1º Coordinates of canvas origin
+        // 2º relative x coordinate of click in canvas
+        // 3º relative y coordinate of click in canvas
+        // 3º WebGL coordinates (3D)
+        var rect = ev.target.getBoundingClientRect(),
+            clickX = ev.clientX - rect.left,
+            clickY = ev.clientY - rect.top,
+            halfCanvasWidth = canvas.width / 2,
+            halfCanvasHeight = canvas.height / 2;
 
-        // relative x coordinate of click in canvas
-        var clickX = ev.clientX - rect.left;
-
-        // relative y coordinate of click in canvas
-        var clickY = ev.clientY - rect.top;
-        
-        // WebGL coordinates (3D)
-        var halfCanvasWidth = canvas.width / 2,
-            halfCanvasHeight = canvas.height / 2,
-            x = (clickX - halfCanvasWidth) / halfCanvasWidth,
+        var x = (clickX - halfCanvasWidth) / halfCanvasWidth,
             y = (halfCanvasHeight - clickY) / halfCanvasHeight;
+        
         return [x, y, 0];
     }
 
@@ -149,8 +146,6 @@
         gl.vertexAttrib1f(a_PSize, psize);
         gl.uniform3fv(u_FragColor, color);
         gl.drawArrays(gl.POINTS, 0, 1);
-        console.log(coordinates[i]);
-
     }
 
     function initShaders(gl, vs_source, fs_source){
