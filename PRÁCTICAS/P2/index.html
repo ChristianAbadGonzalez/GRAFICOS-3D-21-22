@@ -10,7 +10,7 @@
 </head>
 
 <body onload="init()">
-        <canvas id="myCanvas" width="1000" height="500"></canvas>
+        <canvas id="myCanvas" width="500" height="500"></canvas>
         <br>
         <b>Step:</b><input type="text" value="0.01" id="step">
 </body>
@@ -34,7 +34,7 @@
     var drawedMatrix = mat4.create(), // This is the matrix where will we draw
         vertices = new Float32Array([    // vertices
             // DIAMOND Nº1
-            -0.40,  0.00,  0.00, // Vertices #0
+            -0.40,  0.00,  0.00, // Vertice #0
             -0.50,  0.75,  0.00, // Vertice #1
             -0.60,  0.00,  0.00, // Vertice #2 
             -0.40,  0.00,  0.00, // Vertice #3
@@ -79,6 +79,7 @@
 
         if (n < 0){
             console.log('FAILED TO SET THE POSITION OF THE VERTICES');
+            return;
         }
 
         // Set Clear Canvas & Color 
@@ -93,7 +94,7 @@
                 move = [0.0, 0.0, 0.0], // Move vector respect origin
                 zoom = [1.0, 1.0, 1.0], // Starting Zoom
                 angleZ = 0.0, // Z-Starting Angle
-                displacement = [0.0, 0.0]; // Displacement from x
+                diamondMove = [0.0, 0.0]; // step of the diamond move
 
             switch (ev.keyCode) {
                 
@@ -114,31 +115,32 @@
                     break;
             
                 case 37: // Left
-                    move = [-step, 0.0, 0.0];
+                    move = [-step, 0, 0];
                     break;
             
                 case 38: // Up
-                    move = [0.0, step, 0.0];
+                    move = [0, step, 0];
                     break;
                 
                 case 39: // Right
-                    move = [step, 0.0, 0.0];
+                    move = [step, 0, 0];
                     break;
                 
                 case 40: // Down
-                    move = [0.0, -step, 0.0];
+                    move = [0, -step, 0];
                     break;
                 
-                case 187: // 187 --> + [BLOCK NUM]
-                    displacement = [step, -step];
+                case 187: case 107: // 187 --> + [BLOCK NUM];  107 --> + [ENTER]
+                    diamondMove = [step, -step];
                     break;
  
-                case 189: // 189 --> - [BLOCK NUM]
-                    displacement = [-step, step];
+                case 189: case 109: // 189 --> - [BLOCK NUM];  109 --> - [ENTER]
+                    diamondMove = [-step, step];
                     break;
                 
                 default:
                     // If you press another key --> ¡ERROR!
+                    console.log('¡ERROR!: You are not pressing the correct key.');
                     break;
                 }
             
@@ -148,10 +150,10 @@
                 drawedMatrix = moveDiamond(drawedMatrix, move);     // Third move
                 
                 // Update the vertices position
-                verticesAux = moveVertices(verticesAux, displacement);
+                verticesAux = moveVertices(verticesAux, diamondMove);
                 
                 // Refrest the Buffer with new displacement the vertices
-                gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+                gl.bufferData(gl.ARRAY_BUFFER, verticesAux, gl.STATIC_DRAW);
 
                 // Draw the Update Matrix
                 drawMatrix(gl, drawedMatrix, n);
