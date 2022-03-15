@@ -42,14 +42,15 @@
 </script>
 
 <script>
-    var gl ,
+    var gl,
         canvas,
         count = 0.0,
         ratio,
-        z = 3;
+        z = 3,
+        projectionValue = document.querySelector('input[name="projection"]:checked').value;
 
     function init(){
-
+        
         // Get canvas object from the DOM and Init WebGL Context
         canvas = document.getElementById("myCanvas");
         gl = canvas.getContext("webgl");
@@ -82,10 +83,14 @@
         // Hidden surface removal
         gl.enable(gl.DEPTH_TEST);
 
-        // Draw Scene
+        // Event listener for mouse wheel
         document.addEventListener('wheel', function (event) {
-            z = event.wheelDelta > 0 ? z - 1 : z + 1;
-            console.log(z);
+            projectionValue
+            if (projectionValue == 'orthographic'){
+                z = event.wheelDelta > 0 ? z + 0 : z - 0;
+            }else if (projectionValue == 'perspective'){
+                z = event.wheelDelta > 0 ? z + 1 : z - 1;
+            }
         });
         drawScene();
     }
@@ -93,10 +98,10 @@
     function drawScene() {
         gl.clear(gl.COLOR_BUFFER_BIT);
         
-        var projectionValue = document.querySelector('input[name="projection"]:checked').value,
-            u_pMatrix = gl.getUniformLocation(gl.program, "u_pMatrix"),
-            u_vMatrix = gl.getUniformLocation(gl.program, "u_vMatrix"),
-            ratio = canvas.width/canvas.height;
+        projectionValue = document.querySelector('input[name="projection"]:checked').value,
+        u_pMatrix = gl.getUniformLocation(gl.program, "u_pMatrix"),
+        u_vMatrix = gl.getUniformLocation(gl.program, "u_vMatrix"),
+        ratio = canvas.width/canvas.height;
         
         switch (projectionValue) {
             case "perspective":
@@ -181,10 +186,10 @@
              0.50,  -0.50, -0.50,   1, 0, 1, // Vértice 19
             
             // TOP - GREEN 
-            -0.50,   0.50, -0.50,   0, 1, 0, // Vértice 20
-            -0.50,   0.50,  0.50,   0, 1, 0, // Vértice 21
-             0.50,   0.50,  0.50,   0, 1, 0, // Vértice 22
-             0.50,   0.50, -0.50,   0, 1, 0,  // Vértice 23
+            -0.75,   0.50, -0.75,   0, 1, 0, // Vértice 20
+            -0.75,   0.50,  0.75,   0, 1, 0, // Vértice 21
+             0.75,   0.50,  0.75,   0, 1, 0, // Vértice 22
+             0.75,   0.50, -0.75,   0, 1, 0,  // Vértice 23
 
         // PYRAMID POINTS
              0.00,   1.00,  0.00,   1, 1, 0, // Vértice 24
