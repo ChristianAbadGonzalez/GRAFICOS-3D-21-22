@@ -57,7 +57,8 @@
         count = 0.0,
         ratio,
         z = 3,
-        projectionValue = document.querySelector('input[name="projection"]:checked').value;
+        projectionValue = document.querySelector('input[name="projection"]:checked').value,
+        rotate = [0.0, 0.0, 0.0];
 
     function init(){
         
@@ -93,6 +94,9 @@
         // Hidden surface removal
         gl.enable(gl.DEPTH_TEST);
 
+        // Init textures
+        initTexturesAndDraw(gl);
+
         // Event listener for mouse wheel
         document.addEventListener('wheel', function (event) {
             projectionValue
@@ -102,7 +106,64 @@
                 z = event.wheelDelta > 0 ? z + 1 : z - 1;
             }
         });
-        drawScene();
+
+        document.onkeydown = function (ev) {
+            var step = new Number(document.getElementById("step").value); // Get the value of the STEP
+
+            // Resetting variables for make only one move
+            move = [0.0, 0.0, 0.0]; // Move vector respect origin
+            scale = [1.0, 1.0, 1.0]; // Starting Zoom
+            angleZ = [0.0, 0.0]; // Z-Starting Angle
+            axis = [0.0, 0.0]; // Axis
+
+            switch (ev.keyCode) {
+                case 33: // PageUp
+                    scale = [1 + step, 1 + step, 1 + step];
+                    break;
+                
+                case 34: // PageDown
+                    scale = [1 - step, 1 - step, 1 - step];
+                    break;
+        
+                case 35: // End
+                    angleZ = [-step, step];
+                    break;
+            
+                case 36: // Home
+                    angleZ = [step, -step];
+                    break;
+            
+                case 37: // Left
+                    move = [-step, 0, 0];
+                    break;
+            
+                case 38: // Up
+                    move = [0, step, 0];
+                    break;
+                
+                case 39: // Right
+                    move = [step, 0, 0];
+                    break;
+                
+                case 40: // Down
+                    move = [0, -step, 0];
+                    break;
+                
+                case 187: case 107: // 187 --> + [BLOCK NUM];  107 --> + [ENTER]
+                    axis = [step, -step];
+                    break;
+
+                case 189: case 109: // 189 --> - [BLOCK NUM];  109 --> - [ENTER]
+                    axis = [-step, step];
+                    break;
+                
+                default:
+                    // If you press another key --> ¡ERROR!
+                    console.log('¡ERROR!: You are not pressing the correct key.');
+                    break;
+                }
+            drawScene();
+        }
     }
 
     function drawScene() {
@@ -281,10 +342,15 @@
     }
 
     function initTexturesAndDraw(gl) {
-        var image = new Image();
-        image.src = 'bricks.jpg';
-        image.onload = function () {
-            loadTexture(gl, "u_Sampler", image, 0, true);
+        var image0 = new Image(),
+            image1 = new Image(0);
+        image.src = 'house.jpg';
+        image.src = 'dark.gif';
+        image.onload = function (){
+            loadTexture(gl, "u_Sampler0", image0, 0, true);
+            image.onload = function (){
+                loadTexture(gl, "u_Sampler1", image1, 1, true);
+            }
             drawScene();
         };
     }
