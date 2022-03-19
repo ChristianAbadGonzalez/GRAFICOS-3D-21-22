@@ -118,56 +118,31 @@
         document.onkeydown = function (ev) {
             step; // Get the value of the STEP
 
-            // Resetting variables for make only one move
-            move = [0.0, 0.0, 0.0]; // Move vector respect origin
-            scale = [1.0, 1.0, 1.0]; // Starting Zoom
-            angleZ = [0.0, 0.0]; // Z-Starting Angle
-            axis = [0.0, 0.0]; // Axis
-
-            switch (ev.keyCode) {
-                case 33: // PageUp
-                    scale = [1 + step, 1 + step, 1 + step];
-                    break;
-                
-                case 34: // PageDown
-                    scale = [1 - step, 1 - step, 1 - step];
-                    break;
-        
-                case 35: // End
-                    angleZ = [-step, step];
-                    break;
-            
-                case 36: // Home
-                    angleZ = [step, -step];
+            switch (ev.keyCode) {         
+                case 38: // Up
+                    axisY += step;
+                    console.log('UP CAMERA');
                     break;
             
                 case 37: // Left
-                    move = [-step, 0, 0];
-                    break;
-            
-                case 38: // Up
-                    move = [0, step, 0];
+                    rotate = [-step, 0, 0];
+                    console.log('LEFT ROTATE');
                     break;
                 
                 case 39: // Right
-                    move = [step, 0, 0];
+                    rotate = [step, 0, 0];
+                    console.log('RIGHT CAMERA');
                     break;
                 
                 case 40: // Down
-                    move = [0, -step, 0];
-                    break;
-                
-                case 187: case 107: // 187 --> + [BLOCK NUM];  107 --> + [ENTER]
-                    axis = [step, -step];
-                    break;
-
-                case 189: case 109: // 189 --> - [BLOCK NUM];  109 --> - [ENTER]
-                    axis = [-step, step];
+                    axisY -= step;
+                    console.log('DOWN CAMERA');
                     break;
                 
                 default:
                     // If you press another key --> ¡ERROR!
                     console.log('¡ERROR!: You are not pressing the correct key.');
+                    step = 0.0;
                     break;
                 }
             initVertexShader(gl);
@@ -190,7 +165,7 @@
         switch (projectionValue) {
             case "perspective":
                 var pMatrix = mat4.perspective(mat4.create(), toRadian(60), ratio, 0.1, 100),
-                    vMatrix = mat4.lookAt(mat4.create(), [0, 0, z], [0, 0, 0], [0, 1, 0]);
+                    vMatrix = mat4.lookAt(mat4.create(), [0, axisY, z], [0, 0, 0], [0, 1, 0]);
                 break;
         
             case "orthographic":
@@ -237,57 +212,54 @@
     function initVertexShader(gl) {
         // Vertexes and Texture Coordinates)
         var vertexesAndTextures = [
-            /* 0.5, 0.5, 1.0, 0.5, 1.0, 1.0, 0.5, 1.0 --> FRONT OK */
-            /* 0.5, 1.0, 1.0, 1.0, 1.0, 0.5, 0.5, 0.5 */
-
         // CUBE POINTS
-            // FRONT
-            -0.50, -0.50, -0.50,    0.5, 0.5, // Vértice 0
-             0.50, -0.50, -0.50,    1.0, 0.5, // Vértice 1
-             0.50,  0.50, -0.50,    0.5, 1.0, // Vértice 2
-            -0.50,  0.50, -0.50,    0.0, 0.5, // Vértice 3
-
             // BACK
-            -0.50, -0.50,  0.50,    0.0, 0.5, // Vértice 4
-             0.50, -0.50,  0.50,    0.5, 0.5, // Vértice 5
-             0.50,  0.50,  0.50,    0.5, 1.0, // Vértice 6
-            -0.50,  0.50,  0.50,    0.0, 1.0, // Vértice 7
+            -0.50, -0.50, -0.50,    0.0, 0.5, // Vértice 0
+             0.50, -0.50, -0.50,    0.5, 0.5, // Vértice 1
+             0.50,  0.50, -0.50,    0.5, 1.0, // Vértice 2
+            -0.50,  0.50, -0.50,    0.0, 1.0, // Vértice 3
+
+            // FRONT
+            -0.50, -0.50,  0.50,    0.5, 0.5, // Vértice 4
+             0.50, -0.50,  0.50,    1.0, 0.5, // Vértice 5
+             0.50,  0.50,  0.50,    1.0, 1.0, // Vértice 6
+            -0.50,  0.50,  0.50,    0.5, 1.0, // Vértice 7
             
             // LEFT
-            -0.50, -0.50, -0.50,    0.5, 1.0, // Vértice 8
-            -0.50,  0.50, -0.50,    0.5, 0.5, // Vértice 9
-            -0.50,  0.50,  0.50,    0.0, 0.5, // Vértice 10
-            -0.50, -0.50,  0.50,    0.0, 1.0, // Vértice 11
+            -0.50, -0.50, -0.50,    0.0, 0.5, // Vértice 8
+            -0.50,  0.50, -0.50,    0.0, 1.0, // Vértice 9
+            -0.50,  0.50,  0.50,    0.5, 1.0, // Vértice 10
+            -0.50, -0.50,  0.50,    0.5, 0.5, // Vértice 11
             
             // RIGHT
-             0.50,  -0.50, -0.50,   0.5, 1.0, // Vértice 12
-             0.50,   0.50, -0.50,   0.5, 0.5, // Vértice 13
-             0.50,   0.50,  0.50,   0.0, 0.5, // Vértice 14
-             0.50,  -0.50,  0.50,   0.0, 1.0, // Vértice 15
+             0.50,  -0.50, -0.50,   0.0, 0.5, // Vértice 12
+             0.50,   0.50, -0.50,   0.0, 1.0, // Vértice 13
+             0.50,   0.50,  0.50,   0.5, 1.0, // Vértice 14
+             0.50,  -0.50,  0.50,   0.5, 0.5, // Vértice 15
             
             // BOTTOM 
-            -0.50,  -0.50, -0.50,   0.5, 1.0, // Vértice 16
-            -0.50,  -0.50,  0.50,   0.7, 1.0, // Vértice 17
-             0.50,  -0.50,  0.50,   0.7, 0.5, // Vértice 18
-             0.50,  -0.50, -0.50,   0.5, 0.5, // Vértice 19
+            -0.50,  -0.50, -0.50,   0.5, 0.7, // Vértice 16
+            -0.50,  -0.50,  0.50,   0.7, 0.7, // Vértice 17
+             0.50,  -0.50,  0.50,   0.7, 1.0, // Vértice 18
+             0.50,  -0.50, -0.50,   0.5, 1.0, // Vértice 19
             
             // TOP
-            -0.75,   0.50, -0.75,   0.5, 1.0, // Vértice 20
-            -0.75,   0.50,  0.75,   0.7, 1.0, // Vértice 21
-             0.75,   0.50,  0.75,   0.7, 0.5, // Vértice 22
-             0.75,   0.50, -0.75,   0.5, 0.5, // Vértice 23
+            -0.75,   0.50, -0.75,   0.0, 0.0, // Vértice 20
+            -0.75,   0.50,  0.75,   1.0, 0.5, // Vértice 21
+             0.75,   0.50,  0.75,   1.0, 0.0, // Vértice 22
+             0.75,   0.50, -0.75,   0.0, 0.5, // Vértice 23
 
         // PYRAMID POINTS
-             0.00,   1.00,  0.00,   0.5, 0.0, // Vértice 24
+             0.00,   1.00,  0.00,   0.5, 0.5, // Vértice 24
              0.00,   1.00,  0.00,   0.5, 0.5, // Vértice 25
-             0.00,   1.00,  0.00,   0.0, 0.5, // Vértice 26
-             0.00,   1.00,  0.00,   0.0, 0.0, // Vértice 27
+             0.00,   1.00,  0.00,   0.5, 0.5, // Vértice 26
+             0.00,   1.00,  0.00,   0.5, 0.5, // Vértice 27
         
         // PYRAMID BASE POINTS
-            -0.75,   0.50, -0.75,    0.5, 0.5, // Vértice 28
-            -0.75,   0.50,  0.75,    0.5, 0.0, // Vértice 29
-             0.75,   0.50,  0.75,    1.0, 0.5, // Vértice 30
-             0.75,   0.50, -0.75,    0.5, 0.5  // Vértice 31            
+            -0.75,   0.50, -0.75,    1.0, 0.0, // Vértice 28
+            -0.75,   0.50,  0.75,    0.0, 0.0, // Vértice 29
+             0.75,   0.50,  0.75,    1.0, 0.0, // Vértice 30
+             0.75,   0.50, -0.75,    0.0, 0.0  // Vértice 31            
 
         ];
 
