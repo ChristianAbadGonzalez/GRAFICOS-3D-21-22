@@ -44,7 +44,6 @@
 
 <script id="shaderFs" type="x-shader/x-fragment">
     precision highp float;
-    precision mediump float;
     uniform sampler2D u_Sampler0;
     uniform sampler2D u_Sampler1;
     varying vec2 v_TexCoord;
@@ -61,9 +60,9 @@
         count = 0.0,
         ratio,
         z = 3,
-        rotate = [0.0, 0.0, 0.0],
         axisY = 0.0;
         projectionValue = document.querySelector('input[name="projection"]:checked').value,
+        daylightValue = document.querySelector('imput[name="daylight"]:checked').value,
         step = new Number(document.getElementById("step").value); 
 
         
@@ -116,22 +115,12 @@
         });
 
         document.onkeydown = function (ev) {
-            step; // Get the value of the STEP
+            step = 1.0; // Get the value of the STEP
 
             switch (ev.keyCode) {         
                 case 38: // Up
                     axisY += step;
                     console.log('UP CAMERA');
-                    break;
-            
-                case 37: // Left
-                    rotate = [-step, 0, 0];
-                    console.log('LEFT ROTATE');
-                    break;
-                
-                case 39: // Right
-                    rotate = [step, 0, 0];
-                    console.log('RIGHT CAMERA');
                     break;
                 
                 case 40: // Down
@@ -148,16 +137,13 @@
             initVertexShader(gl);
         }
 
-        document.onkeyup = function (ev) {
-            step = 0.0;
-            initVertexShader(gl);
-        }
     }
 
     function drawScene() {
         gl.clear(gl.COLOR_BUFFER_BIT);
         
         projectionValue = document.querySelector('input[name="projection"]:checked').value,
+        daylightValue = document.querySelector('imput[name="daylight"]:checked').value,
         u_pMatrix = gl.getUniformLocation(gl.program, "u_pMatrix"),
         u_vMatrix = gl.getUniformLocation(gl.program, "u_vMatrix"),
         ratio = canvas.width/canvas.height;
@@ -173,6 +159,13 @@
                     vMatrix = mat4.create();
                 break;
             default:
+        }
+
+        switch(daylightValue){
+            case "day":
+                break;
+            case "night":
+                break;
         }
 
         gl.uniformMatrix4fv(u_pMatrix, false, pMatrix);
@@ -342,7 +335,7 @@
         };
     }
 
-    function loadTexture(gl, samplerUniform, image, unitNumber, flip) {
+    function loadTexture(gl, samplerUniform, image1, unitNumber, flip) {
         // Flip the image's y axis
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, flip);
 
@@ -350,7 +343,7 @@
         gl.activeTexture(gl.TEXTURE0 + unitNumber);
         gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image1);
 
         // Set texture to the sampler
         var fragmentSamplerUniform = gl.getUniformLocation(gl.program, samplerUniform);
