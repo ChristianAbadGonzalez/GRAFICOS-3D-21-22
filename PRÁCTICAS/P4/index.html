@@ -12,7 +12,7 @@
     <canvas id="myCanvas" width="640" height="480"></canvas>
     <br>
     <b>Step:</b>
-    <input type="text" value="0.01" id="step">
+    <input type="text" value="0.1" id="step">
     <br>
     <b>Rotation</b>
     <input type="checkbox" name="rotation" checked>
@@ -43,14 +43,21 @@
 </script>
 
 <script id="shaderFs" type="x-shader/x-fragment">
-    precision highp float;
+    precision mediump float;
     uniform sampler2D u_Sampler0;
     uniform sampler2D u_Sampler1;
+    uniform float u_filter;
     varying vec2 v_TexCoord;
+    uniform float u_Filter;
     void main(void) {
-      vec4 color0 = texture2D(u_Sampler0, v_TexCoord);
-      vec4 color1 = texture2D(u_Sampler1, v_TexCoord);
-      gl_FragColor = color0 * color1;
+        vec4 color0 = texture2D(u_Sampler0, v_TexCoord);
+        vec4 color1 = texture2D(u_Sampler1, v_TexCoord);
+        
+        if (u_Filter == 0.0){
+            gl_FragColor = color0 * color1;
+        }else{
+            gl_FragColor = color0;
+        }
     }
 </script>
 
@@ -60,12 +67,7 @@
         count = 0.0,
         ratio,
         z = 3,
-        axisY = 0.0;
-        projectionValue = document.querySelector('input[name="projection"]:checked').value,
-        daylightValue = document.querySelector('imput[name="daylight"]:checked').value,
-        step = new Number(document.getElementById("step").value); 
-
-        
+        axisY = 0.0; 
 
     function init(){
         
@@ -115,7 +117,7 @@
         });
 
         document.onkeydown = function (ev) {
-            step = 1.0; // Get the value of the STEP
+            var step = new Number(document.getElementById("step").value);
 
             switch (ev.keyCode) {         
                 case 38: // Up
@@ -134,16 +136,14 @@
                     step = 0.0;
                     break;
                 }
-            initVertexShader(gl);
         }
-
     }
 
     function drawScene() {
         gl.clear(gl.COLOR_BUFFER_BIT);
         
-        projectionValue = document.querySelector('input[name="projection"]:checked').value,
-        daylightValue = document.querySelector('imput[name="daylight"]:checked').value,
+        projectionValue = document.querySelector('input[name="projection"]:checked').value, 
+        daylightValue = document.querySelector('input[name="daylight"]:checked').value,      
         u_pMatrix = gl.getUniformLocation(gl.program, "u_pMatrix"),
         u_vMatrix = gl.getUniformLocation(gl.program, "u_vMatrix"),
         ratio = canvas.width/canvas.height;
@@ -161,15 +161,20 @@
             default:
         }
 
-        switch(daylightValue){
-            case "day":
-                break;
-            case "night":
-                break;
-        }
-
         gl.uniformMatrix4fv(u_pMatrix, false, pMatrix);
         gl.uniformMatrix4fv(u_vMatrix, false, vMatrix);
+
+        switch(daylightValue){
+            case "day":
+                var u_Filter = gl.getUniformLocation(gl.program, "u_Filter");
+                gl.uniform1f(u_Filter, 1);
+                break;
+
+            case "night":
+                var u_Filter = gl.getUniformLocation(gl.program, "u_Filter");
+                gl.uniform1f(u_Filter, 0);
+                break;
+        }
 
         var rotationChecked = document.querySelector('input[name="rotation"]:checked'),
             primitiveValue = document.querySelector('input[name="primitive"]:checked').value,
@@ -201,16 +206,15 @@
         requestAnimationFrame(drawScene);
     }
 
-
     function initVertexShader(gl) {
         // Vertexes and Texture Coordinates)
         var vertexesAndTextures = [
         // CUBE POINTS
             // BACK
-            -0.50, -0.50, -0.50,    0.0, 0.5, // Vértice 0
-             0.50, -0.50, -0.50,    0.5, 0.5, // Vértice 1
-             0.50,  0.50, -0.50,    0.5, 1.0, // Vértice 2
-            -0.50,  0.50, -0.50,    0.0, 1.0, // Vértice 3
+            -0.50, -0.50, -0.50,    0.5, 0.5, // Vértice 0
+             0.50, -0.50, -0.50,    0.0, 0.5, // Vértice 1
+             0.50,  0.50, -0.50,    0.0, 1.0, // Vértice 2
+            -0.50,  0.50, -0.50,    0.5, 1.0, // Vértice 3
 
             // FRONT
             -0.50, -0.50,  0.50,    0.5, 0.5, // Vértice 4
@@ -225,10 +229,10 @@
             -0.50, -0.50,  0.50,    0.5, 0.5, // Vértice 11
             
             // RIGHT
-             0.50,  -0.50, -0.50,   0.0, 0.5, // Vértice 12
-             0.50,   0.50, -0.50,   0.0, 1.0, // Vértice 13
-             0.50,   0.50,  0.50,   0.5, 1.0, // Vértice 14
-             0.50,  -0.50,  0.50,   0.5, 0.5, // Vértice 15
+             0.50,  -0.50, -0.50,   0.5, 0.5, // Vértice 12
+             0.50,   0.50, -0.50,   0.5, 1.0, // Vértice 13
+             0.50,   0.50,  0.50,   0.0, 1.0, // Vértice 14
+             0.50,  -0.50,  0.50,   0.0, 0.5, // Vértice 15
             
             // BOTTOM 
             -0.50,  -0.50, -0.50,   0.5, 0.7, // Vértice 16
@@ -330,8 +334,9 @@
             loadTexture(gl, "u_Sampler0", image0, 0, true);
             image1.onload = function (){
                 loadTexture(gl, "u_Sampler1", image1, 1, true);
+                drawScene();
             }
-            drawScene();
+           
         };
     }
 
