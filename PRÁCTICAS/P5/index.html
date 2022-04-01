@@ -77,11 +77,19 @@
 </script>
 
 <script>
+    const LATITUDE_BANDS = 30,
+          LONGITUDE_BANDS = 30,
+          RADIUS = 1,
+          MOVE = [0, 0.5, 0],
+          z = 3,
+          FOVY = 0.9,
+          DIRECTIONAL_LIGHT_COLOR = [1.0, 1.0, 1.0],
+          AMBIENT_LIGHT = [0.2, 0.2, 0.2];
+
     var gl,
         canvas,
-        count = 0.0,
         ratio,
-        z = 3,
+        count = 0.0,
         axisY = 0.0; 
 
     function init(){
@@ -209,7 +217,7 @@
         }
         
         // DRAW PRIMITIVE ELEMENTS
-        gl.drawElements(primitive, 6 * 3 * 3, gl.UNSIGNED_SHORT, 0);
+        gl.drawElements(primitive, LATITUDE_BANDS * LONGITUDE_BANDS * 3 * 3, gl.UNSIGNED_SHORT, 0);
 
         var speed = document.getElementById("speed").value;
 
@@ -338,6 +346,28 @@
         var vMatrixUniform = gl.getUniformLocation(gl.program, "u_vMatrix"),
             vMatrix = mat4.lookAt(mat4.create(), [0, 0, 3], [0, 0, 0], [0, 1, 0]);
         gl.uniformMatrix4fv(vMatrixUniform, false, vMatrix);
+
+        // LUZ DIRECCIONAL
+        var u_LightColor = gl.getUniformLocation(gl.program, "u_LightColor"),
+            lightDirection = [
+                document.getElementById("x").value,
+                document.getElementById("y").value,
+                document.getElementById("z").value
+            ],
+            u_LightDirection = gl.getUniformLocation(gl.program, "u_LightDirection");
+
+        // Write u_LightColor
+        gl.uniform3fv(u_LightColor, DIRECTIONAL_LIGHT_COLOR);
+
+        // Write u_LightDirection
+        gl.uniform3fv(u_LightDirection, vec3.normalize(lightDirection, lightDirection));
+
+        // LUZ AMBIENTE
+        // Write u_AmbientLight
+        var u_AmbientLight = gl.getUniformLocation(gl.program, "u_AmbientLight");
+        gl.uniform3fv(u_AmbientLight, AMBIENT_LIGHT);
+
+        requestAnimationFrame(initProjection);
     }
 
     function initTexturesAndDraw(gl) {
