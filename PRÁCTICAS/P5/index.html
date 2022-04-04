@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.8.1/gl-matrix-min.js"></script>
-    <title>EJERCICIO EVALUABLE 5</title>
+    <title>EJERCICIO EVALUABLE 7</title>
 </head>
 
 <body onload="init()">
@@ -67,6 +67,7 @@
     void main(void) {
         vec4 color0 = texture2D(u_Sampler0, v_TexCoord);
         vec4 color1 = texture2D(u_Sampler1, v_TexCoord);
+        vec4 color2 = texture2D(u_Sampler2, v_TexCoord);
         float nDotD = max(dot(u_LightDirection, normalize(v_Normal.xyz)), 0.0);
         
         vec3 diffuse = u_LightColor * textures.rgb * nDotD;
@@ -82,7 +83,6 @@
           RADIUS = 1,
           MOVE = [0, 0.5, 0],
           z = 3,
-          FOVY = 0.9,
           DIRECTIONAL_LIGHT_COLOR = [1.0, 1.0, 1.0],
           AMBIENT_LIGHT = [0.2, 0.2, 0.2];
 
@@ -314,7 +314,32 @@
 
         ];
 
-        // Write a_Position and a_Color using gl.ARRAY_BUFFER
+        var v_TCoord = [],
+            normals = [];
+
+        for (var i = 0; i <= LATITUDE_BANDS; i++) {
+                var theta = i * Math.PI / LATITUDE_BANDS;
+
+                for (var j = 0; j <= LONGITUDE_BANDS; j++) {
+                    var phi = j * 2 * Math.PI / LONGITUDE_BANDS;
+
+                    v_TCoord.push(RADIUS * Math.sin(phi) * Math.sin(theta)); // X
+                    v_TCoord.push(RADIUS * Math.cos(theta));                 // Y
+                    v_TCoord.push(RADIUS * Math.cos(phi) * Math.sin(theta)); // Z
+
+                    v_TCoord.push(1 - (j / LONGITUDE_BANDS));  // U
+                    v_TCoord.push(1 - (i / LATITUDE_BANDS));   // V
+
+                    // normal vector is a vec4
+                    normals.push(Math.sin(phi) * Math.sin(theta), // X
+                                Math.cos(theta),                 // Y
+                                Math.cos(phi) * Math.sin(theta), // Z
+                                1.0);
+                }
+        }
+        
+
+        // Write a_Position and a_TextCoord using gl.ARRAY_BUFFER
         gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexesAndTextures), gl.STATIC_DRAW);
 
@@ -329,6 +354,14 @@
         // Write indexes in gl.ELEMENT_ARRAY_BUFFER
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gl.createBuffer());
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indexes), gl.STATIC_DRAW);
+
+        // Write normals in gl.ELEMENT_ARRAY_BUFFER
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gl.createBuffer());
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
+        
+        var vertexNormalAttribute = gl.getAttribLocation(gl.program, "a_Normal");
+        gl.enableVertexAttribArray(vertexNormalAttribute);
+        gl.vertexAttribPointer(vertexNormalAttribute, 3, gl.FLOAT, false, 0, 0);
     }
     
     function toRadian(g){
@@ -372,16 +405,20 @@
 
     function initTexturesAndDraw(gl) {
         var image0 = new Image(0),
-            image1 = new Image(1);
+            image1 = new Image(1),
+            image2 = new Image(2);
         image0.src = 'house.jpg';
         image1.src = 'dark.gif';
+        iamge2.src = 'luna.png';
         image0.onload = function (){
             loadTexture(gl, "u_Sampler0", image0, 0, true);
             image1.onload = function (){
                 loadTexture(gl, "u_Sampler1", image1, 1, true);
-                drawScene();
-            }
-           
+                image2.onload = function (){
+                    loadTexture(gl, "u_Sampler2", image2, 2, true);
+                    drawScene();
+                }
+            } 
         };
     }
 
