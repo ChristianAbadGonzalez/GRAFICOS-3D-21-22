@@ -40,7 +40,7 @@
     uniform mat4 u_pMatrix;
     uniform mat4 u_vMatrix;
     uniform mat4 u_mvMatrix;
-    uniformmat4 u_mnMatrix;
+    uniform mat4 u_normalMatrix;
     
     varying highp vec4 v_Normal;
     varying vec2 v_TexCoord;
@@ -48,7 +48,7 @@
     void main(){
         gl_Position = u_pMatrix * u_vMatrix * u_mvMatrix * a_Position;
         v_TexCoord = a_TexCoord;
-        v_Normal = u_mnMatrix * a_Normal;
+        v_Normal = u_normalMatrix * a_Normal;
     }
 </script>
 
@@ -58,6 +58,7 @@
     uniform sampler2D u_Sampler0;
     uniform sampler2D u_Sampler1;
     uniform sampler2D u_Sampler2;
+    uniform float u_Filter;
     uniform vec3 u_LightColor;
     uniform vec3 u_LightDirection;
     uniform vec3 u_AmbientLight;
@@ -68,23 +69,31 @@
     void main(void) {
         vec4 color0 = texture2D(u_Sampler0, v_TexCoord);
         vec4 color1 = texture2D(u_Sampler1, v_TexCoord);
-        vec4 color2 = texture2D(u_Sampler2, v_TexCoord);
         float nDotD = max(dot(u_LightDirection, normalize(v_Normal.xyz)), 0.0);
+        vec4 textures;
         
+        if (u_Filter == 0.0){
+            textures = color0 * color1;
+        }else{
+            textures = color0;
+        }
+
         vec3 diffuse = u_LightColor * textures.rgb * nDotD;
         vec3 ambient = u_AmbientLight * textures.rgb;
 
         gl_FragColor = vec4(diffuse + ambient, textures.a);
+
+
     }
 </script>
 
 <script>
-    const LATITUDE_BANDS = 30,
-          LONGITUDE_BANDS = 30,
-          RADIUS = 1,
-          z = 3,
-          DIRECTIONAL_LIGHT_COLOR = [1.0, 1.0, 1.0],
-          AMBIENT_LIGHT = [0.2, 0.2, 0.2];
+    const LATITUDE_BANDS = 30, // ESFERA
+          LONGITUDE_BANDS = 30, // ESFERA
+          RADIUS = 1, // ESFERA
+          z = 3, //CAMARA
+          DIRECTIONAL_LIGHT_COLOR = [1.0, 1.0, 1.0], // COLOR DE LA LUZ DIRECCIONAL
+          AMBIENT_LIGHT = [0.2, 0.2, 0.2]; // COLOR DE LA LUZ AMBIENTAL
     
     var canvas,
         ratio,
@@ -171,7 +180,7 @@
         u_pMatrix = gl.getUniformLocation(gl.program, "u_pMatrix"),
         u_vMatrix = gl.getUniformLocation(gl.program, "u_vMatrix"),
         u_mvMatrix = gl.getUniformLocation(gl.program, "u_mvMatrix"),
-        u_mnMatrix = gl.getUniformLocation(gl.program, "u_mnMatrix"),
+        u_normalMatrix = gl.getUniformLocation(gl.program, "u_normalMatrix"),
         
         ratio = canvas.width/canvas.height;
         
@@ -221,11 +230,11 @@
 
         // Get normal direction
         var normalMatrix = mat4.invert(mat4.create(), mat4.transpose(mat4.create(), mat4.clone(mvMatrix)));
-        gl.uniformMatrix4fv(u_mnMatrix, false, normalMatrix);
+        gl.uniformMatrix4fv(u_normalMatrix, false, normalMatrix);
         
         // DRAW PRIMITIVE ELEMENTS
-        gl.drawElements(primitive, 6 * 3 * 3, gl.UNSIGNED_SHORT, 0);
-        //gl.drawElements(primitive, LATITUDE_BANDS * LONGITUDE_BANDS * 3 * 3, gl.UNSIGNED_SHORT, 0);
+        //gl.drawElements(primitive, 6 * 3 * 3, gl.UNSIGNED_SHORT, 0);
+        gl.drawElements(primitive, LATITUDE_BANDS * LONGITUDE_BANDS * 3 * 3, gl.UNSIGNED_SHORT, 0);
 
         var speed = document.getElementById("speed").value;
 
@@ -322,46 +331,60 @@
 
         ];
 
-        //var v_TCoord = [],
-          //  normals = [];
+        var vt_coord = [],
+            normals = [];
+            
+        for (var i = 0; i <= LATITUDE_BANDS; i++) {
+             var theta = i * Math.PI / LATITUDE_BANDS;
 
-//        for (var i = 0; i <= LATITUDE_BANDS; i++) {
-//                var theta = i * Math.PI / LATITUDE_BANDS;
+            for (var j = 0; j <= LONGITUDE_BANDS; j++) {
+                 var phi = j * 2 * Math.PI / LONGITUDE_BANDS;
 
-  //              for (var j = 0; j <= LONGITUDE_BANDS; j++) {
-    //                var phi = j * 2 * Math.PI / LONGITUDE_BANDS;
+                 vt_coord.push(RADIUS * Math.sin(phi) * Math.sin(theta)); // X
+                 vt_coord.push(RADIUS * Math.cos(theta));                 // Y
+                 vt_coord.push(RADIUS * Math.cos(phi) * Math.sin(theta)); // Z
 
-//                    v_TCoord.push(RADIUS * Math.sin(phi) * Math.sin(theta)); // X
-  //                  v_TCoord.push(RADIUS * Math.cos(theta));                 // Y
-    //                v_TCoord.push(RADIUS * Math.cos(phi) * Math.sin(theta)); // Z
+                 vt_coord.push(1 - (j / LONGITUDE_BANDS));  // U
+                 vt_coord.push(1 - (i / LATITUDE_BANDS));   // V
 
-      //              v_TCoord.push(1 - (j / LONGITUDE_BANDS));  // U
-        //            v_TCoord.push(1 - (i / LATITUDE_BANDS));   // V
+                // normal vector is a vec4
+                normals.push(Math.sin(phi) * Math.sin(theta), // X
+                             Math.cos(theta),                 // Y
+                             Math.cos(phi) * Math.sin(theta), // Z
+                             1.0);
+                    }
+                }
 
-                    // normal vector is a vec4
-          //          normals.push(Math.sin(phi) * Math.sin(theta), // X
-            //                    Math.cos(theta),                 // Y
-              //                  Math.cos(phi) * Math.sin(theta), // Z
-                //                1.0);
-                //}
-        //}
-        
+            // Indexes
+            var indexes = [];
+            for (var i = 0; i < LATITUDE_BANDS; i++) {
+                for (var j = 0; j < LONGITUDE_BANDS; j++) {
+                    var first = i * (LONGITUDE_BANDS + 1) + j,
+                        second = first + LONGITUDE_BANDS + 1;
+
+                        indexes.push(first);
+                        indexes.push(second);
+                        indexes.push(first + 1);
+
+                        indexes.push(second + 1);
+                        indexes.push(first + 1);
+                        indexes.push(second);
+                }
+            }
 
         // Write a_Position and a_TextCoord using gl.ARRAY_BUFFER
         gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexesAndTextures), gl.STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vt_coord), gl.STATIC_DRAW);
 
+        // a_Position
         var vertexPositionAttribute = gl.getAttribLocation(gl.program, "a_Position");
         gl.enableVertexAttribArray(vertexPositionAttribute);
         gl.vertexAttribPointer(vertexPositionAttribute, 3, gl.FLOAT, false, 4 * (3 + 2), 0);
 
+        // a_TextCoord
         var vertexColorAttribute = gl.getAttribLocation(gl.program, "a_TexCoord");
         gl.enableVertexAttribArray(vertexColorAttribute);
         gl.vertexAttribPointer(vertexColorAttribute, 2, gl.FLOAT, false, 4 * (3 + 2), 4 * 3);
-
-        // Write indexes in gl.ELEMENT_ARRAY_BUFFER
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gl.createBuffer());
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indexes), gl.STATIC_DRAW);
 
         // Write normals in gl.ELEMENT_ARRAY_BUFFER
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gl.createBuffer());
@@ -369,7 +392,11 @@
         
         var vertexNormalAttribute = gl.getAttribLocation(gl.program, "a_Normal");
         gl.enableVertexAttribArray(vertexNormalAttribute);
-        gl.vertexAttribPointer(vertexNormalAttribute, 3, gl.FLOAT, false, 0, 0);
+        gl.vertexAttribPointer(vertexNormalAttribute, 4, gl.FLOAT, false, 0, 0);
+
+        // Write indexes in gl.ELEMENT_ARRAY_BUFFER
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gl.createBuffer());
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indexes), gl.STATIC_DRAW);
     }
     
     function toRadian(g){
@@ -377,18 +404,22 @@
 	}
 
     function initProjection(gl, canvas) {
-        // Write u_pMatrix
+        
         var pMatrixUniform = gl.getUniformLocation(gl.program, "u_pMatrix"),
+            vMatrixUniform = gl.getUniformLocation(gl.program, "u_vMatrix"),
+            
             ratio = canvas.width / canvas.height,
+            
+            vMatrix = mat4.lookAt(mat4.create(), [0, 0, 3], [0, 0, 0], [0, 1, 0]);
             pMatrix = mat4.perspective(mat4.create(), toRadian(60), ratio, 0.1, 100);
+        
+        // Write u_pMatrix
         gl.uniformMatrix4fv(pMatrixUniform, false, pMatrix);
 
         // Write u_vMatrix
-        var vMatrixUniform = gl.getUniformLocation(gl.program, "u_vMatrix"),
-            vMatrix = mat4.lookAt(mat4.create(), [0, 0, 3], [0, 0, 0], [0, 1, 0]);
         gl.uniformMatrix4fv(vMatrixUniform, false, vMatrix);
 
-        // LUZ DIRECCIONAL
+        // LUZ DIRECCIONAL WRITE "u_LightColor"
         var u_LightColor = gl.getUniformLocation(gl.program, "u_LightColor"),
             lightDirection = [
                 document.getElementById("x").value,
@@ -403,8 +434,7 @@
         // Write u_LightDirection
         gl.uniform3fv(u_LightDirection, vec3.normalize(lightDirection, lightDirection));
 
-        // LUZ AMBIENTE
-        // Write u_AmbientLight
+        // LUZ AMBIENTE WRITE "u_AmbientLight"
         var u_AmbientLight = gl.getUniformLocation(gl.program, "u_AmbientLight");
         gl.uniform3fv(u_AmbientLight, AMBIENT_LIGHT);
 
@@ -413,21 +443,16 @@
 
     function initTexturesAndDraw(gl) {
         var image0 = new Image(0),
-            image1 = new Image(1),
-            image2 = new Image(2);
+            image1 = new Image(1);
         image0.src = 'house.jpg';
         image1.src = 'dark.gif';
-        iamge2.src = 'luna.png';
         image0.onload = function (){
             loadTexture(gl, "u_Sampler0", image0, 0, true);
             image1.onload = function (){
                 loadTexture(gl, "u_Sampler1", image1, 1, true);
-                image2.onload = function (){
-                    loadTexture(gl, "u_Sampler2", image2, 2, true);
-                    drawScene();
-                }
-            } 
-        };
+                drawScene();
+            }
+        } 
     }
 
     function loadTexture(gl, samplerUniform, image1, unitNumber, flip) {
