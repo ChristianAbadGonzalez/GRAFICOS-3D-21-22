@@ -57,8 +57,9 @@
     
     uniform sampler2D u_Sampler0;
     uniform sampler2D u_Sampler1;
-    uniform sampler2D u_Sampler2;
+
     uniform float u_Filter;
+
     uniform vec3 u_LightColor;
     uniform vec3 u_LightDirection;
     uniform vec3 u_AmbientLight;
@@ -69,33 +70,37 @@
     void main(void) {
         vec4 color0 = texture2D(u_Sampler0, v_TexCoord);
         vec4 color1 = texture2D(u_Sampler1, v_TexCoord);
-        float nDotD = max(dot(u_LightDirection, normalize(v_Normal.xyz)), 0.0);
+       
+        float nDotL = max(dot(u_LightDirection, normalize(v_Normal.xyz)), 0.0);
+       
         vec4 textures;
         
-        if (u_Filter == 0.0){
-            textures = color0 * color1;
-        }else{
-            textures = color0;
+        if (u_Filter == 0.0) { 
+            vec3 diffuse = u_LightColor * (color0.rgb * color1.rgb) * nDotL;
+            vec3 ambient = u_AmbientLight * (color0.rgb * color1.rgb);
+        
+            gl_FragColor = vec4(diffuse + ambient, color0.a * color1.a);
+            
+        } else {
+            vec3 diffuse = u_LightColor * color0.rgb * nDotL;
+            vec3 ambient = u_AmbientLight * color0.rgb;
+        
+            gl_FragColor = vec4(diffuse + ambient, color0.a);
         }
-
-        vec3 diffuse = u_LightColor * textures.rgb * nDotD;
-        vec3 ambient = u_AmbientLight * textures.rgb;
-
-        gl_FragColor = vec4(diffuse + ambient, textures.a);
-
 
     }
 </script>
 
 <script>
-    const LATITUDE_BANDS = 30, // ESFERA
-          LONGITUDE_BANDS = 30, // ESFERA
-          RADIUS = 1, // ESFERA
+    const LATITUDE_BANDS = 5, // ESFERA
+          LONGITUDE_BANDS = 5, // ESFERA
+          RADIUS = 0.1, // ESFERA
           z = 3, //CAMARA
-          DIRECTIONAL_LIGHT_COLOR = [1.0, 1.0, 1.0], // COLOR DE LA LUZ DIRECCIONAL
-          AMBIENT_LIGHT = [0.2, 0.2, 0.2]; // COLOR DE LA LUZ AMBIENTAL
+          lightColor = [1.0, 1.0, 1.0], // COLOR DE LA LUZ DIRECCIONAL
+          ambientLight = [0.2, 0.2, 0.2]; // COLOR DE LA LUZ AMBIENTAL
     
     var canvas,
+        gl,
         ratio,
         count = 0.0,
         axisY = 0.0; 
@@ -233,8 +238,8 @@
         gl.uniformMatrix4fv(u_normalMatrix, false, normalMatrix);
         
         // DRAW PRIMITIVE ELEMENTS
-        //gl.drawElements(primitive, 6 * 3 * 3, gl.UNSIGNED_SHORT, 0);
-        gl.drawElements(primitive, LATITUDE_BANDS * LONGITUDE_BANDS * 3 * 3, gl.UNSIGNED_SHORT, 0);
+        gl.drawElements(primitive, 6 * 3 * 3, gl.UNSIGNED_SHORT, 0);
+        //gl.drawElements(primitive, LATITUDE_BANDS * LONGITUDE_BANDS * 3 * 3, gl.UNSIGNED_SHORT, 0);
 
         var speed = document.getElementById("speed").value;
 
@@ -251,52 +256,52 @@
         var vertexesAndTextures = [
         // CUBE POINTS
             // BACK
-            -0.50, -0.50, -0.50,    0.5, 0.5, // Vértice 0
-             0.50, -0.50, -0.50,    0.0, 0.5, // Vértice 1
-             0.50,  0.50, -0.50,    0.0, 1.0, // Vértice 2
-            -0.50,  0.50, -0.50,    0.5, 1.0, // Vértice 3
+            -0.50, -0.50, -0.50,    0.5, 0.5,   0.0,   0.0,  -1.0, // Vértice 0
+             0.50, -0.50, -0.50,    0.0, 0.5,   0.0,   0.0,  -1.0, // Vértice 1
+             0.50,  0.50, -0.50,    0.0, 1.0,   0.0,   0.0,  -1.0, // Vértice 2
+            -0.50,  0.50, -0.50,    0.5, 1.0,   0.0,   0.0,  -1.0, // Vértice 3
 
             // FRONT
-            -0.50, -0.50,  0.50,    0.5, 0.5, // Vértice 4
-             0.50, -0.50,  0.50,    1.0, 0.5, // Vértice 5
-             0.50,  0.50,  0.50,    1.0, 1.0, // Vértice 6
-            -0.50,  0.50,  0.50,    0.5, 1.0, // Vértice 7
+            -0.50, -0.50,  0.50,    0.5, 0.5,   0.0,   0.0,   1.0, // Vértice 4
+             0.50, -0.50,  0.50,    1.0, 0.5,   0.0,   0.0,   1.0, // Vértice 5
+             0.50,  0.50,  0.50,    1.0, 1.0,   0.0,   0.0,   1.0, // Vértice 6
+            -0.50,  0.50,  0.50,    0.5, 1.0,   0.0,   0.0,   1.0, // Vértice 7
             
             // LEFT
-            -0.50, -0.50, -0.50,    0.0, 0.5, // Vértice 8
-            -0.50,  0.50, -0.50,    0.0, 1.0, // Vértice 9
-            -0.50,  0.50,  0.50,    0.5, 1.0, // Vértice 10
-            -0.50, -0.50,  0.50,    0.5, 0.5, // Vértice 11
+            -0.50, -0.50, -0.50,    0.0, 0.5,   -1.0,  0.0,   0.0, // Vértice 8
+            -0.50,  0.50, -0.50,    0.0, 1.0,   -1.0,  0.0,   0.0, // Vértice 9
+            -0.50,  0.50,  0.50,    0.5, 1.0,   -1.0,  0.0,   0.0, // Vértice 10
+            -0.50, -0.50,  0.50,    0.5, 0.5,   -1.0,  0.0,   0.0, // Vértice 11
             
             // RIGHT
-             0.50,  -0.50, -0.50,   0.5, 0.5, // Vértice 12
-             0.50,   0.50, -0.50,   0.5, 1.0, // Vértice 13
-             0.50,   0.50,  0.50,   0.0, 1.0, // Vértice 14
-             0.50,  -0.50,  0.50,   0.0, 0.5, // Vértice 15
+             0.50,  -0.50, -0.50,   0.5, 0.5,    1.0,  0.0,   0.0, // Vértice 12
+             0.50,   0.50, -0.50,   0.5, 1.0,    1.0,  0.0,   0.0, // Vértice 13
+             0.50,   0.50,  0.50,   0.0, 1.0,    1.0,  0.0,   0.0, // Vértice 14
+             0.50,  -0.50,  0.50,   0.0, 0.5,    1.0,  0.0,   0.0, // Vértice 15
             
             // BOTTOM 
-            -0.50,  -0.50, -0.50,   0.5, 0.7, // Vértice 16
-            -0.50,  -0.50,  0.50,   0.7, 0.7, // Vértice 17
-             0.50,  -0.50,  0.50,   0.7, 1.0, // Vértice 18
-             0.50,  -0.50, -0.50,   0.5, 1.0, // Vértice 19
+            -0.50,  -0.50, -0.50,   0.5, 0.7,    0.0, -1.0,   0.0, // Vértice 16
+            -0.50,  -0.50,  0.50,   0.7, 0.7,    0.0, -1.0,   0.0, // Vértice 17
+             0.50,  -0.50,  0.50,   0.7, 1.0,    0.0, -1.0,   0.0, // Vértice 18
+             0.50,  -0.50, -0.50,   0.5, 1.0,    0.0, -1.0,   0.0, // Vértice 19
             
             // TOP
-            -0.75,   0.50, -0.75,   0.0, 0.0, // Vértice 20
-            -0.75,   0.50,  0.75,   1.0, 0.5, // Vértice 21
-             0.75,   0.50,  0.75,   1.0, 0.0, // Vértice 22
-             0.75,   0.50, -0.75,   0.0, 0.5, // Vértice 23
+            -0.75,   0.50, -0.75,   0.0, 0.0,    0.0, -1.0,   0.0, // Vértice 20
+            -0.75,   0.50,  0.75,   1.0, 0.5,    0.0, -1.0,   0.0, // Vértice 21
+             0.75,   0.50,  0.75,   1.0, 0.0,    0.0, -1.0,   0.0, // Vértice 22
+             0.75,   0.50, -0.75,   0.0, 0.5,    0.0, -1.0,   0.0, // Vértice 23
 
         // PYRAMID POINTS
-             0.00,   1.00,  0.00,   0.5, 0.5, // Vértice 24
-             0.00,   1.00,  0.00,   0.5, 0.5, // Vértice 25
-             0.00,   1.00,  0.00,   0.5, 0.5, // Vértice 26
-             0.00,   1.00,  0.00,   0.5, 0.5, // Vértice 27
+             0.00,   1.00,  0.00,   0.5, 0.5,    0.0,  1.0,   0.0, // Vértice 24
+             0.00,   1.00,  0.00,   0.5, 0.5,    0.0,  1.0,   0.0, // Vértice 25
+             0.00,   1.00,  0.00,   0.5, 0.5,    0.0,  1.0,   0.0, // Vértice 26
+             0.00,   1.00,  0.00,   0.5, 0.5,    0.0,  1.0,   0.0, // Vértice 27
         
         // PYRAMID BASE POINTS
-            -0.75,   0.50, -0.75,    1.0, 0.0, // Vértice 28
-            -0.75,   0.50,  0.75,    0.0, 0.0, // Vértice 29
-             0.75,   0.50,  0.75,    1.0, 0.0, // Vértice 30
-             0.75,   0.50, -0.75,    0.0, 0.0  // Vértice 31            
+            -0.75,   0.50, -0.75,    1.0, 0.0,   0.0,  1.0,   0.0, // Vértice 28
+            -0.75,   0.50,  0.75,    0.0, 0.0,   0.0,  1.0,   0.0, // Vértice 29
+             0.75,   0.50,  0.75,    1.0, 0.0,   0.0,  1.0,   0.0, // Vértice 30
+             0.75,   0.50, -0.75,    0.0, 0.0,   0.0,  1.0,   0.0 // Vértice 31            
 
         ];
 
@@ -331,68 +336,24 @@
 
         ];
 
-        var vt_coord = [],
-            normals = [];
-            
-        for (var i = 0; i <= LATITUDE_BANDS; i++) {
-             var theta = i * Math.PI / LATITUDE_BANDS;
-
-            for (var j = 0; j <= LONGITUDE_BANDS; j++) {
-                 var phi = j * 2 * Math.PI / LONGITUDE_BANDS;
-
-                 vt_coord.push(RADIUS * Math.sin(phi) * Math.sin(theta)); // X
-                 vt_coord.push(RADIUS * Math.cos(theta));                 // Y
-                 vt_coord.push(RADIUS * Math.cos(phi) * Math.sin(theta)); // Z
-
-                 vt_coord.push(1 - (j / LONGITUDE_BANDS));  // U
-                 vt_coord.push(1 - (i / LATITUDE_BANDS));   // V
-
-                // normal vector is a vec4
-                normals.push(Math.sin(phi) * Math.sin(theta), // X
-                             Math.cos(theta),                 // Y
-                             Math.cos(phi) * Math.sin(theta), // Z
-                             1.0);
-                    }
-                }
-
-            // Indexes
-            var indexes = [];
-            for (var i = 0; i < LATITUDE_BANDS; i++) {
-                for (var j = 0; j < LONGITUDE_BANDS; j++) {
-                    var first = i * (LONGITUDE_BANDS + 1) + j,
-                        second = first + LONGITUDE_BANDS + 1;
-
-                        indexes.push(first);
-                        indexes.push(second);
-                        indexes.push(first + 1);
-
-                        indexes.push(second + 1);
-                        indexes.push(first + 1);
-                        indexes.push(second);
-                }
-            }
 
         // Write a_Position and a_TextCoord using gl.ARRAY_BUFFER
         gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vt_coord), gl.STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexesAndTextures), gl.STATIC_DRAW);
 
         // a_Position
         var vertexPositionAttribute = gl.getAttribLocation(gl.program, "a_Position");
         gl.enableVertexAttribArray(vertexPositionAttribute);
-        gl.vertexAttribPointer(vertexPositionAttribute, 3, gl.FLOAT, false, 4 * (3 + 2), 0);
+        gl.vertexAttribPointer(vertexPositionAttribute, 3, gl.FLOAT, false, 4 * (3 + 2 + 3), 0);
 
         // a_TextCoord
         var vertexColorAttribute = gl.getAttribLocation(gl.program, "a_TexCoord");
         gl.enableVertexAttribArray(vertexColorAttribute);
-        gl.vertexAttribPointer(vertexColorAttribute, 2, gl.FLOAT, false, 4 * (3 + 2), 4 * 3);
-
-        // Write normals in gl.ELEMENT_ARRAY_BUFFER
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gl.createBuffer());
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
+        gl.vertexAttribPointer(vertexColorAttribute, 2, gl.FLOAT, false, 4 * (3 + 2 + 3), 4 * 3);
         
         var vertexNormalAttribute = gl.getAttribLocation(gl.program, "a_Normal");
         gl.enableVertexAttribArray(vertexNormalAttribute);
-        gl.vertexAttribPointer(vertexNormalAttribute, 4, gl.FLOAT, false, 0, 0);
+        gl.vertexAttribPointer(vertexNormalAttribute, 3, gl.FLOAT, false,4 * (3 + 2 + 3), 4 * (3 + 2));
 
         // Write indexes in gl.ELEMENT_ARRAY_BUFFER
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gl.createBuffer());
@@ -420,25 +381,27 @@
         gl.uniformMatrix4fv(vMatrixUniform, false, vMatrix);
 
         // LUZ DIRECCIONAL WRITE "u_LightColor"
-        var u_LightColor = gl.getUniformLocation(gl.program, "u_LightColor"),
-            lightDirection = [
-                document.getElementById("x").value,
-                document.getElementById("y").value,
-                document.getElementById("z").value
-            ],
-            u_LightDirection = gl.getUniformLocation(gl.program, "u_LightDirection");
-
-        // Write u_LightColor
-        gl.uniform3fv(u_LightColor, DIRECTIONAL_LIGHT_COLOR);
+        var u_LightColor = gl.getUniformLocation(gl.program, "u_LightColor");
+        gl.uniform3fv(u_LightColor, lightColor);
 
         // Write u_LightDirection
+        var x = document.getElementById("x").value,
+            y = document.getElementById("y").value,
+            z = document.getElementById("z").value,
+            lightDirection = [x, y, z],
+            u_LightDirection = gl.getUniformLocation(gl.program, "u_LightDirection");
+        gl.uniform3fv(u_LightDirection, lightColor);
         gl.uniform3fv(u_LightDirection, vec3.normalize(lightDirection, lightDirection));
+
+        // Write u_LightColor
+        gl.uniform3fv(u_LightColor, lightDirection);
+
+
+
 
         // LUZ AMBIENTE WRITE "u_AmbientLight"
         var u_AmbientLight = gl.getUniformLocation(gl.program, "u_AmbientLight");
-        gl.uniform3fv(u_AmbientLight, AMBIENT_LIGHT);
-
-        requestAnimationFrame(initProjection);
+        gl.uniform3fv(u_AmbientLight, ambientLight);
     }
 
     function initTexturesAndDraw(gl) {
@@ -450,7 +413,7 @@
             loadTexture(gl, "u_Sampler0", image0, 0, true);
             image1.onload = function (){
                 loadTexture(gl, "u_Sampler1", image1, 1, true);
-                drawScene();
+                drawScene(gl);
             }
         } 
     }
