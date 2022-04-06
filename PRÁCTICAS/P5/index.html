@@ -68,39 +68,36 @@
     varying vec2 v_TexCoord;
     
     void main(void) {
-        vec4 color0 = texture2D(u_Sampler0, v_TexCoord);
-        vec4 color1 = texture2D(u_Sampler1, v_TexCoord);
-       
-        float nDotL = max(dot(u_LightDirection, normalize(v_Normal.xyz)), 0.0);
-       
+
+        vec4 texture0 = texture2D(u_Sampler0, v_TexCoord);
+        vec4 texture1 = texture2D(u_Sampler1, v_TexCoord);
         vec4 textures;
-        
+    
+        float nDotL = max(dot(u_LightDirection, normalize(v_Normal.xyz)), 0.0);
+    
         if (u_Filter == 0.0) { 
-            vec3 diffuse = u_LightColor * (color0.rgb * color1.rgb) * nDotL;
-            vec3 ambient = u_AmbientLight * (color0.rgb * color1.rgb);
-        
-            gl_FragColor = vec4(diffuse + ambient, color0.a * color1.a);
-            
+            textures =  texture0 * texture1;
         } else {
-            vec3 diffuse = u_LightColor * color0.rgb * nDotL;
-            vec3 ambient = u_AmbientLight * color0.rgb;
-        
-            gl_FragColor = vec4(diffuse + ambient, color0.a);
+            textures =  texture0;
         }
 
+        vec3 diffuse = u_LightColor * textures.rgb * nDotL;
+        vec3 ambient = u_AmbientLight * textures.rgb;
+    
+        gl_FragColor = vec4(ambient + diffuse, textures.a);
     }
 </script>
 
 <script>
-    const LATITUDE_BANDS = 5, // ESFERA
-          LONGITUDE_BANDS = 5, // ESFERA
+    const LATITUDE_BANDS = 15, // ESFERA
+          LONGITUDE_BANDS = 15, // ESFERA
           RADIUS = 0.1, // ESFERA
-          z = 3, //CAMARA
-          lightColor = [1.0, 1.0, 1.0], // COLOR DE LA LUZ DIRECCIONAL
-          ambientLight = [0.2, 0.2, 0.2]; // COLOR DE LA LUZ AMBIENTAL
+          DIRECTIONAL_LIGHT_COLOR = [1.0, 1.0, 1.0], // COLOR DE LA LUZ DIRECCIONAL
+          AMBIENT_LIGHT = [0.2, 0.2, 0.2]; // COLOR DE LA LUZ AMBIENTAL
     
     var canvas,
         gl,
+        z = 3,
         ratio,
         count = 0.0,
         axisY = 0.0; 
@@ -180,7 +177,9 @@
         gl.clear(gl.COLOR_BUFFER_BIT);
         
         projectionValue = document.querySelector('input[name="projection"]:checked').value, 
-        daylightValue = document.querySelector('input[name="daylight"]:checked').value,      
+        daylightValue = document.querySelector('input[name="daylight"]:checked').value,
+        rotationChecked = document.querySelector('input[name="rotation"]:checked'),
+        primitiveValue = document.querySelector('input[name="primitive"]:checked').value,
         
         u_pMatrix = gl.getUniformLocation(gl.program, "u_pMatrix"),
         u_vMatrix = gl.getUniformLocation(gl.program, "u_vMatrix"),
@@ -188,6 +187,14 @@
         u_normalMatrix = gl.getUniformLocation(gl.program, "u_normalMatrix"),
         
         ratio = canvas.width/canvas.height;
+
+        // Write u_LightDirection
+        var x_light = document.getElementById("x").value,
+            y_light = document.getElementById("y").value,
+            z_light = document.getElementById("z").value,
+            lightDirection = [x_light, y_light, z_light],
+            u_LightDirection = gl.getUniformLocation(gl.program, "u_LightDirection");
+        gl.uniform3fv(u_LightDirection, lightDirection);
         
         switch (projectionValue) {
             case "perspective":
@@ -217,12 +224,6 @@
                 break;
         }
 
-        var rotationChecked = document.querySelector('input[name="rotation"]:checked'),
-            primitiveValue = document.querySelector('input[name="primitive"]:checked').value,
-            mvMatrix = mat4.fromRotation(mat4.create(), count, [0, 0.5, 0]);
-
-        gl.uniformMatrix4fv(u_mvMatrix, false, mvMatrix);
-
         switch (primitiveValue) {
             case "triangles":
                 primitive = gl.TRIANGLES;
@@ -233,14 +234,31 @@
             default:
         }
 
+        // Get Motion Matrix HOUSE
+        var mvMatrix = mat4.fromRotation(mat4.create(), count, [0, 0.5, 0]);
+
+        gl.uniformMatrix4fv(u_mvMatrix, false, mvMatrix);
+
+        // Get normal direction
+        var normalMatrix = mat4.invert(mat4.create(), mat4.transpose(mat4.create(), mat4.clone(mvMatrix)));
+        gl.uniformMatrix4fv(u_normalMatrix, false, normalMatrix);
+
+        // DRAW PRIMITIVE ELEMENTS
+        gl.drawElements(primitive, 6 * 3 * 3, gl.UNSIGNED_SHORT, 0);
+        
+
+        // Get Motion Matrix SPHERE
+        var mvMatrix = mat4.fromTranslation(mat4.create(), lightDirection);
+        
+        gl.uniformMatrix4fv(u_mvMatrix, false, mvMatrix);
+
         // Get normal direction
         var normalMatrix = mat4.invert(mat4.create(), mat4.transpose(mat4.create(), mat4.clone(mvMatrix)));
         gl.uniformMatrix4fv(u_normalMatrix, false, normalMatrix);
         
-        // DRAW PRIMITIVE ELEMENTS
-        gl.drawElements(primitive, 6 * 3 * 3, gl.UNSIGNED_SHORT, 0);
-        //gl.drawElements(primitive, LATITUDE_BANDS * LONGITUDE_BANDS * 3 * 3, gl.UNSIGNED_SHORT, 0);
-
+        // DRAW SPHERE PRIMITIVE ELEMENTS/POINTS
+        gl.drawElements(primitive, LATITUDE_BANDS * LONGITUDE_BANDS * 3 * 2, gl.UNSIGNED_SHORT, 54*2);
+        
         var speed = document.getElementById("speed").value;
 
         if (rotationChecked){
@@ -252,7 +270,7 @@
     }
 
     function initVertexShader(gl) {
-        // Vertexes and Texture Coordinates)
+        // Vertexes and Texture Coordinates
         var vertexesAndTextures = [
         // CUBE POINTS
             // BACK
@@ -335,8 +353,44 @@
             28, 30, 31 // TRIANGLE #18 
 
         ];
+        
+        // SPHERE
 
+        for (var i = 0; i <= LATITUDE_BANDS; i++) {
+            var theta = i * Math.PI / LATITUDE_BANDS;
 
+            for (var j = 0; j <= LONGITUDE_BANDS; j++) {
+                var phi = j * 2 * Math.PI / LONGITUDE_BANDS;
+                    vertexesAndTextures.push(RADIUS * Math.sin(phi) * Math.sin(theta) + 0.15); // X
+                    vertexesAndTextures.push(RADIUS * Math.cos(theta) + 0.15);                 // Y
+                    vertexesAndTextures.push(RADIUS * Math.cos(phi) * Math.sin(theta) + 0.15); // Z
+
+                    vertexesAndTextures.push(1 - (j / LONGITUDE_BANDS));  // U
+                    vertexesAndTextures.push(1 - (i / LATITUDE_BANDS));   // V
+
+                    // normal vector is a vec4
+                    vertexesAndTextures.push(Math.sin(phi) * Math.sin(theta)) // X
+                    vertexesAndTextures.push(Math.cos(theta))                 // Y
+                    vertexesAndTextures.push(Math.cos(phi) * Math.sin(theta)) // Z
+                                             
+            }
+        }
+        
+        for (var i = 0; i < LATITUDE_BANDS; i++) {
+            for (var j = 0; j < LONGITUDE_BANDS; j++) {
+                 var first = i * (LONGITUDE_BANDS + 1) + j + 32,
+                     second = first + LONGITUDE_BANDS + 1;
+
+                 indexes.push(first);
+                 indexes.push(second);
+                 indexes.push(first + 1);
+
+                 indexes.push(second + 1);
+                 indexes.push(first + 1);
+                 indexes.push(second);
+            }
+        };
+        console.log(indexes)
         // Write a_Position and a_TextCoord using gl.ARRAY_BUFFER
         gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexesAndTextures), gl.STATIC_DRAW);
@@ -353,7 +407,7 @@
         
         var vertexNormalAttribute = gl.getAttribLocation(gl.program, "a_Normal");
         gl.enableVertexAttribArray(vertexNormalAttribute);
-        gl.vertexAttribPointer(vertexNormalAttribute, 3, gl.FLOAT, false,4 * (3 + 2 + 3), 4 * (3 + 2));
+        gl.vertexAttribPointer(vertexNormalAttribute, 3, gl.FLOAT, false, 4 * (3 + 2 + 3), 4 * (3 + 2));
 
         // Write indexes in gl.ELEMENT_ARRAY_BUFFER
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gl.createBuffer());
@@ -382,26 +436,19 @@
 
         // LUZ DIRECCIONAL WRITE "u_LightColor"
         var u_LightColor = gl.getUniformLocation(gl.program, "u_LightColor");
-        gl.uniform3fv(u_LightColor, lightColor);
+        gl.uniform3fv(u_LightColor, DIRECTIONAL_LIGHT_COLOR);
 
         // Write u_LightDirection
-        var x = document.getElementById("x").value,
-            y = document.getElementById("y").value,
-            z = document.getElementById("z").value,
-            lightDirection = [x, y, z],
+        var x_light = document.getElementById("x").value,
+            y_light = document.getElementById("y").value,
+            z_light = document.getElementById("z").value,
+            lightDirection = [x_light, y_light, z_light],
             u_LightDirection = gl.getUniformLocation(gl.program, "u_LightDirection");
-        gl.uniform3fv(u_LightDirection, lightColor);
-        gl.uniform3fv(u_LightDirection, vec3.normalize(lightDirection, lightDirection));
-
-        // Write u_LightColor
-        gl.uniform3fv(u_LightColor, lightDirection);
-
-
-
+        gl.uniform3fv(u_LightDirection, lightDirection);
 
         // LUZ AMBIENTE WRITE "u_AmbientLight"
         var u_AmbientLight = gl.getUniformLocation(gl.program, "u_AmbientLight");
-        gl.uniform3fv(u_AmbientLight, ambientLight);
+        gl.uniform3fv(u_AmbientLight, AMBIENT_LIGHT);
     }
 
     function initTexturesAndDraw(gl) {
