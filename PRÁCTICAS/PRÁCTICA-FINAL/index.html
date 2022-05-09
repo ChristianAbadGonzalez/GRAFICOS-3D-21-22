@@ -1,0 +1,506 @@
+<!--  
+    AUTOR: CHRISTIAN ABAD GONZÁLEZ
+    ASIGNATURA: GRÁFICOS Y VISUALIZACIÓN EN 3D
+    PRÁCTICA FINAL: BREAKOUT CON THREE.JS
+    ARCHIVO: INDEX.HTML
+
+    PARTES IMPLEMENTADAS:
+        
+        FUNCIONALIDAD BÁSICA.
+        
+        FUNCIONALIDAD AVANAZADA:
+            - Ángulo de rebote variable
+            - Velocidad de desplazamiento vertical variable
+        MEJORAS:
+            - Marcador con gráfico 3D.
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <script src="three.min.js"></script>
+
+  <title>SUPER BREAKOUT</title>
+</head>
+
+<body onload="init()">
+	<style>
+		body{color: white; background-image: url(/PRÁCTICAS/PRÁCTICA-FINAL/fondo.png);}
+	</style>
+
+    <script>
+        /* GLOBAL VARIABLES */
+        var direction = "stop",
+            speed = {"player": 0.125},
+            step = {"x": 0.15, "y": 0.25, "init": [0.15, 0.25]},
+            score = 0,
+            collisionCount = 0,
+            radius = 0.75,
+            fov = 90,
+            scene = null,
+            floorSize = {"x": 20, "y": 30},
+            brickSize = {"x": null, "y": 1, "z": 1},
+            borderSizeVertical = {"x": 1, "y": floorSize.y, "z": 2},
+            borderSizeHorizontal = {"x": floorSize.x, "y": 1, "z": 2},
+            leftBorderPos = {"x": -floorSize.x / 2, "y": 0, "z": 0},
+            rightBorderPos = {"x": floorSize.x / 2, "y": 0, "z": 0},
+            topBorderPos = {"x": 0, "y": floorSize.y / 2, "z": 0},
+            paddleSize = {"x": 5, "y": 1, "z": 1},
+            pausePosition = {"size": 2.5, "height": 0.25, "color": 0xFFFFFF, 
+                             "position": {"x": -14, "y": 25, "z": 7.5}
+                            },
+            gameTextures = {"bg": "fondo.png", "ball": "bola.jpg", 
+                            "paddle": "controller.png", "border": "horizonte.png",
+                            "floor": "fondo.png", "brick": "bricks.png"},
+            lives = 3,
+            maxRows = 4,
+            maxCols = 5,
+            bricksNames = [],
+            spacebar = true,
+            brickPadding = (floorSize.x / 10) + 1,
+            bricks = {"bricks": [], 
+                      "names": [], 
+                      "values": []},
+            counter = 0;
+        
+        var maxScore = 30,       
+            marker = {"size": 2.5, "height": 0.25, "color": 0xFFFFFF, 
+                      "position": {"x": -floorSize.x / 2,
+                                   "y": floorSize.y / 2,
+                                   "z": 7.5}
+                    },
+            initBallPosition = {"x": -floorSize / 10, "y": 0};
+
+        brickSize.x = (floorSize.x - (2 * brickPadding)) / maxCols;
+
+        /* ACCESS TO THE OPERATION OF THE KEYS */
+        /* KEYSTROKE DETECTION */
+        document.addEventListener("keydown", (event) => {
+            switch (event.keyCode){
+                case 37: /* LEFT ARROW */
+                case 65: /* LEFT A */
+                    direction = "left";
+                    console.log("LEFT");
+                    break;
+
+                case 39: /* RIGHT ARROW */
+                case 68: /* RIGHT D */
+                    direction = "right";
+                    console.log("RIGHT");
+                    break;
+
+                case 32:
+                    spacebar = false; getMarker(scene, "marker");
+                    console.log("GAME STARTED");
+                    break;
+                
+                default:
+                    console.log("FAILED KEY PRESSED");
+            }
+        }, false);
+
+        /* DETECTION OF DROPPED KEYS */
+        document.addEventListener("keyup", (event) => {
+            switch (event.keyCode){
+                case 37:
+                case 39:
+                case 65:
+                case 68:
+                    direction = "stop";
+                    break;
+                default:
+                    console.log("FAILED KEY PRESSED");
+            }
+        }, false);
+
+        /* PRINCIPAL SCENE */
+        function init() {
+            scene = new THREE.Scene();
+            
+            var sceneWidth = window.innerWidth - floorSize.x,
+                sceneHeight = window.innerHeight - floorSize.x,
+                ratio = sceneWidth/sceneHeight;
+            
+            scene.background = new THREE.TextureLoader().load(gameTextures.bg);
+        
+            var camera = new THREE.PerspectiveCamera(fov, ratio, 0.01, 100);
+            
+            camera.position.set(0, -floorSize.x, floorSize.x);
+            camera.lookAt(scene.position);
+
+            var listener = new THREE.AudioListener();
+            camera.add(listener);
+            
+            var sound = new THREE.Audio(listener),
+                audioLoader = new THREE.AudioLoader(),
+                music = "star-wars.ogg";
+            
+            audioLoader.load(music, (buffer) => {
+                sound.setBuffer(buffer);
+                sound.setLoop(true);
+                sound.setVolume(0.5);
+                sound.play();
+            });
+        
+            var renderer = new THREE.WebGLRenderer({
+                antialias : true
+            });
+            
+            renderer.shadowMap.enabled = true;
+            renderer.setSize(sceneWidth, sceneHeight);
+            document.body.appendChild(renderer.domElement);
+
+            /* ELEMENT SCENE */
+            var leftBorder = getBorder("left", borderSizeVertical, leftBorderPos),
+                rightBorder = getBorder("right", borderSizeVertical, rightBorderPos),
+                player = getPaddle("down", -((borderSizeVertical.y / 2))),
+                topBorder = getBorder("top", borderSizeHorizontal, topBorderPos),
+                sphere = getSphere();
+            
+            /* ADDED ELEMENTS TO THE SCENE */
+            getMarker(scene, 'marker');
+            
+            scene.add(getLight(borderSizeVertical.y / 10));
+            
+            scene.add(getLight(-borderSizeVertical.y / 10));
+            
+            scene.add(leftBorder);
+            
+            scene.add(rightBorder);
+            
+            scene.add(sphere);
+            
+            scene.add(getFloor());
+            
+            scene.add(player);
+            
+            scene.add(topBorder);
+            
+            createBricks(scene);
+
+            /* SHOCK DETECTION */
+            var borders = [leftBorder, rightBorder, player, topBorder];
+            animate(sphere, borders, renderer, scene, camera);
+        }
+
+        /* CREATION OF BRICKS*/
+        function createBricks(scene) {
+            for (let row = 0; row < maxRows; row++) {
+                var posY = (floorSize.y / 2) - brickPadding * (row + 1);
+                
+                for (let col = 0; col < maxCols; col++) {
+                    
+                    var name = "brick" + row.toString() + col.toString(),
+                        posX = -(floorSize.x / 2) + (col + 1) * brickSize.x + col * (brickPadding / (maxCols - 1)); 
+                    
+                    var brick = getBrick(name, posX, posY);
+                    
+                    scene.add(brick);
+                    bricks.bricks.push(brick);
+                    bricks.names.push(name);
+                    bricks.values.push((row <= 1) ? 2: 1);
+                }
+            }
+        }
+
+        /* ANIMATED SCENE */
+        function animate(sphere, borders, renderer, scene, camera) {
+            checkCollision(sphere, borders); checkCollision(sphere, bricks.bricks);
+            playerMove(borders);
+            
+            if (!spacebar) {
+                sphereMove(sphere);
+            }
+            
+            checkDetection(sphere);
+            requestAnimationFrame(() => {
+            animate(sphere, borders, renderer, scene, camera);
+            });
+
+            checkGame();
+            renderer.render(scene, camera);
+        }
+
+        /* CHECK DETECTION */
+        function checkDetection(sphere) {
+            /* PADDLE POSITION */
+            if (Math.abs(sphere.position.y) > (borderSizeVertical.y / 2) - 0.5) {
+                
+                /* VARIABLE SPHERE BOUNCE */
+                if (!(sphere.position.y > (borderSizeVertical.y / 2) - 0.5)) {
+                    step.x = step.init[0];
+                    step.y = step.init[1];
+                
+                    /* INIT POSITION OF THE SPHERE */
+                    sphere.position.x = 0; sphere.position.y = -2;
+                
+                    /* ELIMINATED LIVE */
+                    lives--;
+                    spacebar = true;
+                }
+                getMarker(scene, "marker"); 
+            }
+        }
+
+        /* MOVEMENT OF THE SPHERE */
+        function sphereMove(sphere) {
+            sphere.position.x += step.x; sphere.position.y += step.y;
+        }
+
+        /* MOVEMENT OF THE PLAYER (PADDLE) */
+        function playerMove(borders){
+            var s = (direction == "stop") ? floorSize.x * 10 : ((direction == "left") ? -speed.player : speed.player);
+        
+            if (Math.abs(borders[2].position.x + s) > (floorSize.x / 2) - (paddleSize.x / 2) - 0.5) {
+                borders[2].position.x += 0;
+        
+            }else{
+                borders[2].position.x += s;
+                counter += 1;
+            }
+        }
+
+        /* UPDATE SCORE */
+        function checkGame(){    
+            if (lives <= 0) {
+                document.location.reload(); alert("Has perdido... :-(");
+            }
+
+            if (score == maxScore) {
+                document.location.reload(); alert("Has ganado ! :-D");
+            }
+        }
+
+        /* DIRECTIONAL LIGHT */
+        function getLight(posx) {
+            var light = new THREE.DirectionalLight();
+
+            light.position.set(posx, 5, 5);
+            
+            light.castShadow = true;
+            
+            light.shadow.camera.near = 0;
+            
+            light.shadow.camera.far = floorSize.x;
+            
+            light.shadow.camera.left = -floorSize.y;
+            
+            light.shadow.camera.right = floorSize.y;
+            
+            light.shadow.camera.top = floorSize.y;
+            
+            light.shadow.camera.bottom = -floorSize.y;
+            
+            light.shadow.mapSize.width = 4096;
+            
+            light.shadow.mapSize.height = 4096;
+
+            return light;
+        }
+
+        /* GET SPHERE */
+        function getSphere() {
+            var geometry = new THREE.SphereGeometry(radius);
+            var mesh = new THREE.Mesh(geometry, getMaterial(gameTextures.ball));
+            
+            mesh.position.z = 0;
+            mesh.position.y -= 2;
+            mesh.castShadow = true;
+            mesh.name = "sphere";
+
+            return mesh;
+        }
+
+
+        /* OBTAINING FLOOR */
+        function getFloor() {
+            var geometry = new THREE.PlaneGeometry(floorSize.x, floorSize.y),
+                material = getMaterial(gameTextures.floor);
+            material.transparent = true;
+            material.opacity = 0.0;
+            var mesh = new THREE.Mesh(geometry, material);
+            
+            mesh.receiveShadow = true;
+
+            return mesh;
+        }
+
+        /* OBTAINING BORDERS */
+        function getBorder(name, size, borderPos) {
+            var geometry = new THREE.BoxGeometry(size.x, size.y, size.z);
+            var mesh = new THREE.Mesh(geometry, getMaterial(gameTextures.border));
+            
+            mesh.receiveShadow = true;
+            mesh.position.set(borderPos.x, borderPos.y, borderPos.z);
+            mesh.name = name;
+
+            return mesh;
+        }
+
+        /* GET PADDLE */
+        function getPaddle(name, posY) {
+            if (name == "top") {
+                var x = floorSize.x,
+                    y = 1,
+                    z = 2,
+                    texture = gameTextures.border;
+            
+            }else{
+                var x = paddleSize.x,
+                    y = paddleSize.y,
+                    z = paddleSize.z,
+                    texture = gameTextures.paddle;
+            }
+            
+            var geometry = new THREE.BoxGeometry(x, y, z);
+            
+            var mesh = new THREE.Mesh(geometry,getMaterial(texture));
+            
+            mesh.receiveShadow = true;
+            mesh.name = name;
+            
+            if (name == "top") {
+                mesh.position.set(0, floorSize.y / 2, 0);
+            
+            }else{
+                mesh.position.y = posY;
+            }
+
+            return mesh;
+        }
+
+        /* GET MARKER */
+        function getMarker(scene, name) {
+            var loader = new THREE.FontLoader();
+            
+            loader.load('VT323_Regular.json', (font) => {
+            
+                var object = scene.getObjectByName(name);
+                
+                if (object) {
+                    scene.remove(object);
+                }
+                
+                var startText = spacebar ? "PRESS SPACEBAR TO START\n" : "\n";
+                
+                var text = new THREE.TextGeometry(startText + "   SCORE: " + score + " LIVES: " + lives, {
+                    font: font,
+                    size: marker.size,
+                    height: marker.height,
+                });
+                
+                text.computeBoundingBox(); text.center();
+                
+                var material = new THREE.MeshBasicMaterial({color: marker.color});
+                
+                var mesh = new THREE.Mesh(text, material);
+                
+                mesh.rotation.x = 1;
+                mesh.name = name;
+                mesh.geometry.dispose();
+                mesh.geometry = text;
+                mesh.position.y = marker.position.y;
+                mesh.position.z = marker.position.z;
+                scene.add(mesh);
+            });
+        }
+
+        /* GET BRICKS */
+        function getBrick(name, posX, posY) {
+            var geometry = new THREE.BoxGeometry(brickSize.x, brickSize.y, brickSize.z);
+            
+            var mesh = new THREE.Mesh(geometry, getMaterial(gameTextures.brick));
+            
+            mesh.receiveShadow = true;
+            mesh.name = name;
+            mesh.position.x = posX;
+            mesh.position.y = posY;
+
+            return mesh;
+        }
+
+        /* GET OBJECT TEXTURES */
+        function getMaterial(texture) {
+            var material = new THREE.MeshPhysicalMaterial({
+            map : new THREE.TextureLoader().load(texture)
+        });
+
+        material.side = THREE.DoubleSide;
+
+        return material;
+        }
+
+        /* CHECK COLLISION */
+        function checkCollision(sphere, borders) {
+            var originPosition = sphere.position.clone();
+            collisionCount++;
+        
+            for (var i = 0; i < sphere.geometry.vertices.length; i++) {
+                var localVertex = sphere.geometry.vertices[i].clone(),
+                    globalVertex = localVertex.applyMatrix4(sphere.matrix),
+                    directionVector = globalVertex.sub(sphere.position);
+                
+                var ray = new THREE.Raycaster(originPosition, directionVector.clone().normalize()),
+                    collisionResults = ray.intersectObjects(borders);
+                
+                if (collisionResults.length > 0 && collisionResults[0].distance < directionVector.length()) {
+                    if (collisionResults[0].object.name == "left" || collisionResults[0].object.name == "right") {
+                        step.x *= -1;
+                    }
+                    
+                    if (collisionCount > 20) { 
+                        
+                        if (collisionResults[0].object.name == "down"){ 
+                            
+                            if (Math.abs(collisionResults[0].point.x) < borders[2].position.x + 1) { 
+                                step.x *= 0.5;
+                            
+                            }else{ // lateral
+                                step.x *= 1.5;
+                            }
+
+                            if (counter < 5) { // cuanta mas distancia se recorra, mas veloz rebota
+                                step.y = -0.75;
+                            
+                            }else if(counter < 10){
+                                step.y= -0.9;
+                            
+                            }else if(counter < 20){
+                                step.y = -1.02;
+                            
+                            }else if(counter < 30){
+                                step.y= -1.05;
+                            
+                            }else{
+                                step.y *= -1.1;
+                            }
+                            collisionCount = 0;
+                        }else if (collisionResults[0].object.name == "top"){
+                            step.y *= -1;
+                            collisionCount = 0;
+                        }else if (collisionResults[0].object.name.includes("brick")) {
+                            console.log('holiiii')
+                            step.y *= -1; collisionCount = 0;
+                            
+                            var j = bricks.names.indexOf(collisionResults[0].object.name);
+                            var brick = borders[j];
+                            var value = bricks.values[j];
+                            scene.remove(brick); borders.splice(j, 1); bricks.names.splice(j, 1); bricks.values.splice(j, 1);
+                            score += value;
+                            getMarker(scene, 'marker');
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+
+    </script>
+
+</body>
+
+</html>
