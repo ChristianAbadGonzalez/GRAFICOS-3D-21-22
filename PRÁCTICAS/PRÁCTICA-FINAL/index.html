@@ -35,7 +35,7 @@
     <script>
         /* GLOBAL VARIABLES */
         var direction = "stop",
-            speed = {"player": 0.125},
+            speed = {"player": 0.150},
             step = {"x": 0.15, "y": 0.25, "init": [0.15, 0.25]},
             score = 0,
             collisionCount = 0,
@@ -54,7 +54,7 @@
                              "position": {"x": -14, "y": 25, "z": 7.5}
                             },
             gameTextures = {"bg": "fondo.png", "ball": "bola.jpg", 
-                            "paddle": "controller.png", "border": "horizonte.png",
+                            "paddle": "controller.png", "border": "fondo.png",
                             "floor": "fondo.png", "brick": "bricks.png"},
             lives = 3,
             maxRows = 4,
@@ -137,12 +137,12 @@
             
             var sound = new THREE.Audio(listener),
                 audioLoader = new THREE.AudioLoader(),
-                music = "star-wars.ogg";
+                music = "Super-Breakout.mp3";
             
             audioLoader.load(music, (buffer) => {
                 sound.setBuffer(buffer);
                 sound.setLoop(true);
-                sound.setVolume(0.5);
+                sound.setVolume(0.3);
                 sound.play();
             });
         
@@ -483,7 +483,6 @@
                             step.y *= -1;
                             collisionCount = 0;
                         }else if (collisionResults[0].object.name.includes("brick")) {
-                            console.log('holiiii')
                             step.y *= -1; collisionCount = 0;
                             
                             var j = bricks.names.indexOf(collisionResults[0].object.name);
