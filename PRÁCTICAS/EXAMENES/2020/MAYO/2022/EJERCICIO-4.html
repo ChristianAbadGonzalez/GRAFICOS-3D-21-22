@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Matrix & Vector Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.8.1/gl-matrix-min.js"></script>
+    <title>EJERCICIO EVALUABLE 4</title>
+</head>
+
+<body onload="init()">
+        <canvas id="myCanvas" width="640" height="480"></canvas>
+        <br>
+        <b>Step:</b><input type="text" value="0.01" id="step">
+</body>
+
+<script id="shaderVs" type="x-shader/x-vertex">
+    attribute vec4 a_Position;
+    uniform mat4 u_Matrix;
+    attribute vec3 a_Color;
+    varying highp vec4 v_Color;
+
+    void main(){
+        gl_Position = u_Matrix * a_Position;
+        v_Color = vec4(a_Color, 1.0);
+    }
+</script>
+
+<script id="shaderFs" type="x-shader/x-fragment">
+    precision mediump float;
+    varying highp vec4 v_Color;
+
+    void main(){
+        gl_FragColor = v_Color;
+    }
+</script>
+
+<script>
+    var finalMatrix1 = mat4.create(),
+        finalMatrix2 = mat4.create(),
+        gl,
+        vertices,
+        verticesAux,
+        move = [0.0, 0.0, 0.0], // Move vector respect origin
+        scale = [1.0, 1.0, 1.0], // Starting Zoom
+        angleZ = [0.0, 0.0], // Z-Starting Angle
+        axis = [0.0, 0.0]; // X-Axis 
+
+    // ------ FUNCTION INIT ------ //
+    function init(){
+
+        // Get canvas object from the DOM and Init WebGL Context
+        var canvas = document.getElementById("myCanvas");
+        gl = canvas.getContext("webgl");
+
+        if (!gl) {
+            console.log("FAILED TO GET THE RENDERING CONTEXT FOR WEBGL.");
+            return;
+        }
+
+        // Init Shaders 
+        var vs = document.getElementById('shaderVs').innerHTML,
+            fs = document.getElementById('shaderFs').innerHTML;
+
+        if (!initShaders(gl, vs, fs)){
+            console.log("FAILED TO INITIALIZE SHADERS.");
+            return;
+        }
+
+        // Write the position of vertices to a vertices shader
+        var n = initVertexBuffers(gl);
+
+        if (n < 0){
+            console.log('FAILED TO SET THE POSITION OF THE VERTICES');
+            return;
+        }
+
+        document.onkeydown = function (ev) {
+            var step = new Number(document.getElementById("step").value); // Get the value of the STEP
+
+            // Resetting variables for make only one move
+            move = [0.0, 0.0, 0.0]; // Move vector respect origin
+            scale = [1.0, 1.0, 1.0]; // Starting Zoom
+            angleZ = [0.0, 0.0]; // Z-Starting Angle
+            axis = [0.0, 0.0]; // Axis
+
+            console.log(ev.keyCode);
+
+            switch (ev.keyCode) {
+                case 32: // SpaceBar
+                    finalMatrix1 = mat4.create();
+                    finalMatrix2 = mat4.create();
+                    break;
+
+                case 33: // PageUp
+                    scale = [1 + step, 1 + step, 1 + step];
+                    break;
+                
+                case 34: // PageDown
+                    scale = [1 - step, 1 - step, 1 - step];
+                    break;
+        
+                case 35: // End
+                    angleZ = [-step, step];
+                    break;
+            
+                case 36: // Home
+                    angleZ = [step, -step];
+                    break;
+            
+                case 37: // Left
+                    move = [-step, 0, 0];
+                    break;
+            
+                case 38: // Up
+                    move = [0, step, 0];
+                    break;
+                
+                case 39: // Right
+                    move = [step, 0, 0];
+                    break;
+                
+                case 40: // Down
+                    move = [0, -step, 0];
+                    break;
+                
+                case 187: case 107: // 187 --> + [BLOCK NUM];  107 --> + [ENTER]
+                    axis = [step, -step];
+                    break;
+
+                case 189: case 109: // 189 --> - [BLOCK NUM];  109 --> - [ENTER]
+                    axis = [-step, step];
+                    break;
+                
+                default:
+                    // If you press another key --> ¡ERROR!
+                    console.log('¡ERROR!: You are not pressing the correct key.');
+                    break;
+                }
+            drawScene();
+        }
+
+        // Set Clear Canvas & Color 
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        // Draw Scene
+        drawScene();
+    }
+
+    // ------ DRAW FUNCTIONS ------ //
+
+    function moveVertices(vertices, step) {
+
+        var verticesAux = vertices.slice(),
+            stepLeft = step[0],
+            stepRight = step[1];
+
+        for (var i = 0; i < vertices.length; i = i + 3){
+            if (i < vertices.length / 2) {
+                verticesAux[i] += stepLeft;
+            }else{
+                verticesAux[i] += stepRight;
+            }
+        }
+        return verticesAux;
+    }
+
+    function drawScene(){
+        // Set Clear Color & Canvas
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        // Update the vertices position
+        verticesAux = moveVertices(verticesAux, axis);
+        
+        // Refrest the Buffer with new displacement the vertices
+        gl.bufferData(gl.ARRAY_BUFFER, verticesAux, gl.STATIC_DRAW);
+
+        // Initial Matrix Transformation
+        var translation = mat4.fromTranslation(mat4.create(), move),
+            scaled = mat4.fromScaling(mat4.create(), scale),
+            matrix = mat4.multiply(mat4.create(), translation, scaled);
+
+        // Matrix Combination Diamond 1
+        var translation1 = mat4.fromTranslation(mat4.create(), move),
+            rotate1 = mat4.fromZRotation(mat4.create(), angleZ[0]),
+            matrix1 = mat4.multiply(mat4.create(), translation1, rotate1);
+        matrix1 = mat4.multiply(mat4.create(), matrix, rotate1);
+        finalMatrix1 = mat4.multiply(mat4.create(), finalMatrix1, matrix1);
+
+        //Set uniform value (u_Matrix) in verter shader
+        var mvMatrixUniform = gl.getUniformLocation(gl.program, "u_Matrix");
+        gl.uniformMatrix4fv(mvMatrixUniform, false, finalMatrix1);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+        // Matrix Combination Diamond 2
+        var translation2 = mat4.fromTranslation(mat4.create(), move),
+            rotate2 = mat4.fromZRotation(mat4.create(), angleZ[1]),
+            matrix2 = mat4.multiply(mat4.create(), translation2, rotate2);
+        matrix2 = mat4.multiply(mat4.create(), matrix, rotate2);
+        finalMatrix2 = mat4.multiply(mat4.create(), finalMatrix2, matrix2);
+
+        //Set uniform value (u_Matrix) in verter shader
+        var mvMatrixUniform = gl.getUniformLocation(gl.program, "u_Matrix");
+        gl.uniformMatrix4fv(mvMatrixUniform, false, finalMatrix2);
+        gl.drawArrays(gl.TRIANGLES, 6, 6);
+         
+    };
+
+    function initVertexBuffers(gl){
+        var dim = 3;
+        vertices = new Float32Array([    // vertices
+            // DIAMOND Nº1
+            -0.40,  0.00,  0.00, 1.0, 0.0, 0.0, // Vertice #0
+            -0.50,  0.75,  0.00, 0.0, 1.0, 0.0, // Vertice #1
+            -0.60,  0.00,  0.00, 0.0, 0.0, 1.0, // Vertice #2 
+            -0.40,  0.00,  0.00, 1.0, 0.0, 0.0, // Vertice #3
+            -0.50, -0.75,  0.00, 0.0, 1.0, 0.0, // Vertice #4
+            -0.60,  0.00,  0.00, 0.0, 0.0, 1.0, // Vertice #5
+
+            // DIAMOND Nº2
+            0.40,   0.00,  0.00, 1.0, 0.0, 0.0, // Vertice #6
+            0.50,   0.75,  0.00, 0.0, 1.0, 0.0, // Vertice #7
+            0.60,   0.00,  0.00, 0.0, 0.0, 1.0, // Vertice #8
+            0.40,   0.00,  0.00, 1.0, 0.0, 0.0, // Vertice #9
+            0.50,  -0.75,  0.00, 0.0, 1.0, 0.0, // Vertice #10
+            0.60,   0.00,  0.00, 0.0, 0.0, 1.0  // Vertice #11
+        ]);
+
+        verticesAux = vertices.slice();
+
+        // Create a buffer object and Dim the Object
+        var vertexBuffer = gl.createBuffer();
+
+        if (!vertexBuffer){
+            console.log('FAILED TO CREATE THE BUFFER OBJECT');
+            return -1;
+        }
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+        // Assing the vertex in  buffer object to a_Position variable
+        var a_Position = gl.getAttribLocation(gl.program, 'a_Position');
+
+        if (a_Position < 0){
+            console.log('FAILED TO GET THE STORAGE LOCATION OF a_Position');
+        }
+
+        gl.vertexAttribPointer(a_Position, dim, gl.FLOAT, false, 4*6, 0);
+        gl.enableVertexAttribArray(a_Position);
+
+        // Assing the vertex in  buffer object to a_Position variable
+        var a_Color = gl.getAttribLocation(gl.program, 'a_Color');
+
+        if (a_Color < 0){
+            console.log('FAILED TO GET THE STORAGE LOCATION OF a_Color');
+        }
+
+        gl.vertexAttribPointer(a_Color, dim, gl.FLOAT, false, 4*6, 4*3);
+        gl.enableVertexAttribArray(a_Color);
+
+        // Return number of vertex
+        return vertices.length / dim;
+    }
+
+    function initShaders(gl, vs_source, fs_source){
+
+        // Create Program & Compile shaders 
+        var vertexShader = makeShader(gl, vs_source, gl.VERTEX_SHADER),
+            fragmentShader = makeShader(gl, fs_source, gl.FRAGMENT_SHADER),
+            glProgram = gl.createProgram();
+
+        // Attach and link shaders to the program 
+        gl.attachShader(glProgram, vertexShader);
+        gl.attachShader(glProgram, fragmentShader);
+        gl.linkProgram(glProgram);
+
+        if (!gl.getProgramParameter(glProgram, gl.LINK_STATUS)){
+            alert("UNABLE TO INITIALIZE THE SHADER PROGRAM");
+            return false;
+        }
+
+        /* Use Program */
+        gl.useProgram(glProgram);
+        gl.program = glProgram;
+
+        return true;
+    }
+
+    function makeShader(gl, src, type){
+
+        var shader = gl.createShader(type);
+        gl.shaderSource(shader, src);
+        gl.compileShader(shader)
+
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)){
+            alert("ERROR COMPILE SHADER: " + gl.getShaderInfoLog(shader));
+            return;
+        }
+        return shader;
+    }
+</script>
+
+</html>
