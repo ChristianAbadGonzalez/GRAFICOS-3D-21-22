@@ -36,13 +36,12 @@
     attribute vec4 a_Position;
     attribute vec2 a_TexCoord;
     attribute vec4 a_Normal;
-
-    uniform vec3 u_lightPosition;
     
     uniform mat4 u_pMatrix;
     uniform mat4 u_vMatrix;
     uniform mat4 u_mvMatrix;
     uniform mat4 u_normalMatrix;
+    uniform vec3 u_lightPosition;
     
     varying highp vec4 v_Normal;
     varying vec2 v_TexCoord;
@@ -50,8 +49,8 @@
 
     void main(){
         gl_Position = u_pMatrix * u_vMatrix * u_mvMatrix * a_Position;
-        v_TexCoord = a_TexCoord;
         v_lightDirection = normalize(u_lightPosition - vec3(gl_Position));
+        v_TexCoord = a_TexCoord;
         v_Normal = u_normalMatrix * a_Normal;
     }
 </script>
@@ -65,6 +64,7 @@
     uniform float u_Filter;
 
     uniform vec3 u_LightColor;
+    uniform vec3 u_LightDirection;
     uniform vec3 u_AmbientLight;
 
     varying highp vec4 v_Normal;
@@ -192,13 +192,13 @@
         
         ratio = canvas.width/canvas.height;
 
-        // Write u_lightPosition
+        // Write u_LightDirection
         var x_light = document.getElementById("x").value,
             y_light = document.getElementById("y").value,
             z_light = document.getElementById("z").value,
-            lightPosition = [x_light, y_light, z_light],
+            lightDirection = [x_light, y_light, z_light],
             u_lightPosition = gl.getUniformLocation(gl.program, "u_lightPosition");
-        gl.uniform3fv(u_lightPosition, lightPosition);
+        gl.uniform3fv(u_lightPosition, lightDirection);
         
         switch (projectionValue) {
             case "perspective":
@@ -252,7 +252,7 @@
         
 
         // Get Motion Matrix SPHERE
-        var mvMatrix = mat4.fromTranslation(mat4.create(), lightPosition);
+        var mvMatrix = mat4.fromTranslation(mat4.create(), lightDirection);
         
         gl.uniformMatrix4fv(u_mvMatrix, false, mvMatrix);
 
@@ -278,40 +278,40 @@
         var vertexesAndTextures = [
         // CUBE POINTS
             // BACK
-            -0.50, -0.50, -0.50,    0.5, 0.5,   0.0,   0.0,  -1.0, // Vértice 0
-             0.50, -0.50, -0.50,    0.0, 0.5,   0.0,   0.0,  -1.0, // Vértice 1
-             0.50,  0.50, -0.50,    0.0, 1.0,   0.0,   0.0,  -1.0, // Vértice 2
-            -0.50,  0.50, -0.50,    0.5, 1.0,   0.0,   0.0,  -1.0, // Vértice 3
+            -0.50, -0.50, -0.50,    0.5, 0.5,     0.0,   0.0,  -1.0, // Vértice 0
+             0.50, -0.50, -0.50,    0.0, 0.5,     0.0,   0.0,  -1.0, // Vértice 1
+             0.50,  0.50, -0.50,    0.0, 1.0,     0.0,   0.0,  -1.0, // Vértice 2
+            -0.50,  0.50, -0.50,    0.5, 1.0,     0.0,   0.0,  -1.0, // Vértice 3
 
             // FRONT
-            -0.50, -0.50,  0.50,    0.5, 0.5,   0.0,   0.0,   1.0, // Vértice 4
-             0.50, -0.50,  0.50,    1.0, 0.5,   0.0,   0.0,   1.0, // Vértice 5
-             0.50,  0.50,  0.50,    1.0, 1.0,   0.0,   0.0,   1.0, // Vértice 6
-            -0.50,  0.50,  0.50,    0.5, 1.0,   0.0,   0.0,   1.0, // Vértice 7
+            -0.50, -0.50,  0.50,    0.5, 0.5,     0.0,   0.0,   1.0, // Vértice 4
+             0.50, -0.50,  0.50,    1.0, 0.5,     0.0,   0.0,   1.0, // Vértice 5
+             0.50,  0.50,  0.50,    1.0, 1.0,     0.0,   0.0,   1.0, // Vértice 6
+            -0.50,  0.50,  0.50,    0.5, 1.0,     0.0,   0.0,   1.0, // Vértice 7
             
             // LEFT
-            -0.50, -0.50, -0.50,    0.0, 0.5,   -1.0,  0.0,   0.0, // Vértice 8
-            -0.50,  0.50, -0.50,    0.0, 1.0,   -1.0,  0.0,   0.0, // Vértice 9
-            -0.50,  0.50,  0.50,    0.5, 1.0,   -1.0,  0.0,   0.0, // Vértice 10
-            -0.50, -0.50,  0.50,    0.5, 0.5,   -1.0,  0.0,   0.0, // Vértice 11
+            -0.50, -0.50, -0.50,    0.5, 0.75,   -1.0,  0.0,   0.0, // Vértice 8
+            -0.50,  0.50, -0.50,    0.5, 1.0,    -1.0,  0.0,   0.0, // Vértice 9
+            -0.50,  0.50,  0.50,    0.75, 1.0,   -1.0,  0.0,   0.0, // Vértice 10
+            -0.50, -0.50,  0.50,    0.75, 0.75,  -1.0,  0.0,   0.0, // Vértice 11
             
             // RIGHT
-             0.50,  -0.50, -0.50,   0.5, 0.5,    1.0,  0.0,   0.0, // Vértice 12
-             0.50,   0.50, -0.50,   0.5, 1.0,    1.0,  0.0,   0.0, // Vértice 13
-             0.50,   0.50,  0.50,   0.0, 1.0,    1.0,  0.0,   0.0, // Vértice 14
-             0.50,  -0.50,  0.50,   0.0, 0.5,    1.0,  0.0,   0.0, // Vértice 15
+             0.50,  -0.50, -0.50,   0.75, 0.75,   1.0,  0.0,   0.0, // Vértice 12
+             0.50,   0.50, -0.50,   0.75, 1.0,    1.0,  0.0,   0.0, // Vértice 13
+             0.50,   0.50,  0.50,   0.5, 1.0,     1.0,  0.0,   0.0, // Vértice 14
+             0.50,  -0.50,  0.50,   0.5, 0.75,    1.0,  0.0,   0.0, // Vértice 15
             
             // BOTTOM 
-            -0.50,  -0.50, -0.50,   0.5, 0.7,    0.0, -1.0,   0.0, // Vértice 16
-            -0.50,  -0.50,  0.50,   0.7, 0.7,    0.0, -1.0,   0.0, // Vértice 17
-             0.50,  -0.50,  0.50,   0.7, 1.0,    0.0, -1.0,   0.0, // Vértice 18
-             0.50,  -0.50, -0.50,   0.5, 1.0,    0.0, -1.0,   0.0, // Vértice 19
+            -0.50,  -0.50, -0.50,   0.5, 0.7,     0.0, -1.0,   0.0, // Vértice 16
+            -0.50,  -0.50,  0.50,   0.7, 0.7,     0.0, -1.0,   0.0, // Vértice 17
+             0.50,  -0.50,  0.50,   0.7, 1.0,     0.0, -1.0,   0.0, // Vértice 18
+             0.50,  -0.50, -0.50,   0.5, 1.0,     0.0, -1.0,   0.0, // Vértice 19
             
             // TOP
-            -0.75,   0.50, -0.75,   0.0, 0.0,    0.0, -1.0,   0.0, // Vértice 20
-            -0.75,   0.50,  0.75,   1.0, 0.5,    0.0, -1.0,   0.0, // Vértice 21
-             0.75,   0.50,  0.75,   1.0, 0.0,    0.0, -1.0,   0.0, // Vértice 22
-             0.75,   0.50, -0.75,   0.0, 0.5,    0.0, -1.0,   0.0, // Vértice 23
+            -0.75,   0.50, -0.75,   0.0, 0.0,     0.0, -1.0,   0.0, // Vértice 20
+            -0.75,   0.50,  0.75,   1.0, 0.5,     0.0, -1.0,   0.0, // Vértice 21
+             0.75,   0.50,  0.75,   1.0, 0.0,     0.0, -1.0,   0.0, // Vértice 22
+             0.75,   0.50, -0.75,   0.0, 0.5,     0.0, -1.0,   0.0, // Vértice 23
 
         // PYRAMID POINTS
              0.00,   1.00,  0.00,   0.5, 0.5,    0.0,  1.0,   0.0, // Vértice 24
@@ -442,13 +442,13 @@
         var u_LightColor = gl.getUniformLocation(gl.program, "u_LightColor");
         gl.uniform3fv(u_LightColor, DIRECTIONAL_LIGHT_COLOR);
 
-        // Write v_LightDirection
+        // Write u_LightDirection
         var x_light = document.getElementById("x").value,
             y_light = document.getElementById("y").value,
             z_light = document.getElementById("z").value,
             lightDirection = [x_light, y_light, z_light],
-            v_LightDirection = gl.getUniformLocation(gl.program, "v_LightDirection");
-        gl.uniform3fv(v_LightDirection, lightDirection);
+            u_lightPosition = gl.getUniformLocation(gl.program, "u_lightPosition");
+        gl.uniform3fv(u_lightPosition, lightDirection);
 
         // LUZ AMBIENTE WRITE "u_AmbientLight"
         var u_AmbientLight = gl.getUniformLocation(gl.program, "u_AmbientLight");
