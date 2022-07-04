@@ -27,9 +27,9 @@
     <input type="radio" name="daylight" value="day" checked>Day
     <input type="radio" name="daylight" value="night">Night<br>
     <b>Light direction</b><br>
-    <input type="range" id="x" min="-2" max="2" value="0" step="0.1">X<br>
-    <input type="range" id="y" min="-2" max="2" value="0" step="0.1">Y<br>
-    <input type="range" id="z" min="-2" max="2" value="0" step="0.1">Z<br>
+    <input type="range" id="x" min="-2" max="2" value="0.0" step="0.1">X<br>
+    <input type="range" id="y" min="-2" max="2" value="0.8" step="0.1">Y<br>
+    <input type="range" id="z" min="-2" max="2" value="0.8" step="0.1">Z<br>
 </body>
 
 <script id="shaderVs" type="x-shader/x-vertex">
@@ -41,15 +41,12 @@
     uniform mat4 u_vMatrix;
     uniform mat4 u_mvMatrix;
     uniform mat4 u_normalMatrix;
-    uniform vec3 u_lightPosition;
     
     varying highp vec4 v_Normal;
     varying vec2 v_TexCoord;
-    varying highp vec3 v_lightDirection;
 
     void main(){
         gl_Position = u_pMatrix * u_vMatrix * u_mvMatrix * a_Position;
-        v_lightDirection = normalize(u_lightPosition - vec3(gl_Position));
         v_TexCoord = a_TexCoord;
         v_Normal = u_normalMatrix * a_Normal;
     }
@@ -69,7 +66,6 @@
 
     varying highp vec4 v_Normal;
     varying vec2 v_TexCoord;
-    varying highp vec3 v_lightDirection;
     
     void main(void) {
 
@@ -77,7 +73,7 @@
         vec4 texture1 = texture2D(u_Sampler1, v_TexCoord);
         vec4 textures;
     
-        float nDotL = max(dot(v_lightDirection, normalize(v_Normal.xyz)), 0.0);
+        float nDotL = max(dot(u_LightDirection, normalize(v_Normal.xyz)), 0.0);
     
         if (u_Filter == 0.0) { 
             textures =  texture0 * texture1;
@@ -96,7 +92,6 @@
     const LATITUDE_BANDS = 15, // ESFERA
           LONGITUDE_BANDS = 15, // ESFERA
           RADIUS = 0.1, // ESFERA
-          DIRECTIONAL_LIGHT_COLOR = [1.0, 1.0, 1.0], // COLOR DE LA LUZ DIRECCIONAL
           AMBIENT_LIGHT = [0.2, 0.2, 0.2]; // COLOR DE LA LUZ AMBIENTAL
     
     var canvas,
@@ -104,7 +99,9 @@
         z = 3,
         ratio,
         count = 0.0,
-        axisY = 0.0; 
+        axisY = 0.0,
+        DIRECTIONAL_LIGHT_COLOR = [1.0, 1.0, 1.0], // COLOR DE LA LUZ DIRECCIONAL
+        rotationCheck = false;
 
     function init(){
         
@@ -157,7 +154,11 @@
         document.onkeydown = function (ev) {
             var step = new Number(document.getElementById("step").value);
 
-            switch (ev.keyCode) {         
+            switch (ev.keyCode) {   
+                case 32:
+                    rotationCheck = !rotationCheck;
+                    break;
+
                 case 38: // Up
                     axisY += step;
                     console.log('UP CAMERA');
@@ -168,12 +169,32 @@
                     console.log('DOWN CAMERA');
                     break;
                 
+                case 65: // Ambient Light Blue --> A
+                    var u_LightColor = gl.getUniformLocation(gl.program, "u_LightColor");
+                    gl.uniform3fv(u_LightColor, [0.0, 0.0, 1.0]);
+                    break;
+                
+                case 66: // Origin Ambient Light --> B
+                    var u_LightColor = gl.getUniformLocation(gl.program, "u_LightColor");
+                    gl.uniform3fv(u_LightColor, [1.0, 1.0, 1.0]);
+                    break;
+
+                case 82: // Ambient Light Red --> R
+                    var u_LightColor = gl.getUniformLocation(gl.program, "u_LightColor");
+                    gl.uniform3fv(u_LightColor, [1.0, 0.0, 0.0]); 
+                    break;
+
+                case 86: // Ambient Light Green --> V
+                    var u_LightColor = gl.getUniformLocation(gl.program, "u_LightColor");
+                    gl.uniform3fv(u_LightColor, [0.0, 1.0, 0.0]);
+                    break;
+                
                 default:
                     // If you press another key --> ¡ERROR!
                     console.log('¡ERROR!: You are not pressing the correct key.');
                     step = 0.0;
                     break;
-                }
+            }
         }
     }
 
@@ -197,8 +218,8 @@
             y_light = document.getElementById("y").value,
             z_light = document.getElementById("z").value,
             lightDirection = [x_light, y_light, z_light],
-            u_lightPosition = gl.getUniformLocation(gl.program, "u_lightPosition");
-        gl.uniform3fv(u_lightPosition, lightDirection);
+            u_LightDirection = gl.getUniformLocation(gl.program, "u_LightDirection");
+        gl.uniform3fv(u_LightDirection, lightDirection);
         
         switch (projectionValue) {
             case "perspective":
@@ -265,7 +286,7 @@
         
         var speed = document.getElementById("speed").value;
 
-        if (rotationChecked){
+        if (rotationChecked && rotationCheck){
             count += 0.01 * speed;
         }
 
@@ -278,40 +299,40 @@
         var vertexesAndTextures = [
         // CUBE POINTS
             // BACK
-            -0.50, -0.50, -0.50,    0.5, 0.5,     0.0,   0.0,  -1.0, // Vértice 0
-             0.50, -0.50, -0.50,    0.0, 0.5,     0.0,   0.0,  -1.0, // Vértice 1
-             0.50,  0.50, -0.50,    0.0, 1.0,     0.0,   0.0,  -1.0, // Vértice 2
-            -0.50,  0.50, -0.50,    0.5, 1.0,     0.0,   0.0,  -1.0, // Vértice 3
+            -0.50, -0.50, -0.50,    0.5, 0.5,   0.0,   0.0,  -1.0, // Vértice 0
+             0.50, -0.50, -0.50,    0.0, 0.5,   0.0,   0.0,  -1.0, // Vértice 1
+             0.50,  0.50, -0.50,    0.0, 1.0,   0.0,   0.0,  -1.0, // Vértice 2
+            -0.50,  0.50, -0.50,    0.5, 1.0,   0.0,   0.0,  -1.0, // Vértice 3
 
             // FRONT
-            -0.50, -0.50,  0.50,    0.5, 0.5,     0.0,   0.0,   1.0, // Vértice 4
-             0.50, -0.50,  0.50,    1.0, 0.5,     0.0,   0.0,   1.0, // Vértice 5
-             0.50,  0.50,  0.50,    1.0, 1.0,     0.0,   0.0,   1.0, // Vértice 6
-            -0.50,  0.50,  0.50,    0.5, 1.0,     0.0,   0.0,   1.0, // Vértice 7
+            -0.50, -0.50,  0.50,    0.5, 0.5,   0.0,   0.0,   1.0, // Vértice 4
+             0.50, -0.50,  0.50,    1.0, 0.5,   0.0,   0.0,   1.0, // Vértice 5
+             0.50,  0.50,  0.50,    1.0, 1.0,   0.0,   0.0,   1.0, // Vértice 6
+            -0.50,  0.50,  0.50,    0.5, 1.0,   0.0,   0.0,   1.0, // Vértice 7
             
             // LEFT
-            -0.50, -0.50, -0.50,    0.5, 0.75,   -1.0,  0.0,   0.0, // Vértice 8
-            -0.50,  0.50, -0.50,    0.5, 1.0,    -1.0,  0.0,   0.0, // Vértice 9
-            -0.50,  0.50,  0.50,    0.75, 1.0,   -1.0,  0.0,   0.0, // Vértice 10
-            -0.50, -0.50,  0.50,    0.75, 0.75,  -1.0,  0.0,   0.0, // Vértice 11
+            -0.50, -0.50, -0.50,    0.0, 0.5,   -1.0,  0.0,   0.0, // Vértice 8
+            -0.50,  0.50, -0.50,    0.0, 1.0,   -1.0,  0.0,   0.0, // Vértice 9
+            -0.50,  0.50,  0.50,    0.5, 1.0,   -1.0,  0.0,   0.0, // Vértice 10
+            -0.50, -0.50,  0.50,    0.5, 0.5,   -1.0,  0.0,   0.0, // Vértice 11
             
             // RIGHT
-             0.50,  -0.50, -0.50,   0.75, 0.75,   1.0,  0.0,   0.0, // Vértice 12
-             0.50,   0.50, -0.50,   0.75, 1.0,    1.0,  0.0,   0.0, // Vértice 13
-             0.50,   0.50,  0.50,   0.5, 1.0,     1.0,  0.0,   0.0, // Vértice 14
-             0.50,  -0.50,  0.50,   0.5, 0.75,    1.0,  0.0,   0.0, // Vértice 15
+             0.50,  -0.50, -0.50,   0.5, 0.5,    1.0,  0.0,   0.0, // Vértice 12
+             0.50,   0.50, -0.50,   0.5, 1.0,    1.0,  0.0,   0.0, // Vértice 13
+             0.50,   0.50,  0.50,   0.0, 1.0,    1.0,  0.0,   0.0, // Vértice 14
+             0.50,  -0.50,  0.50,   0.0, 0.5,    1.0,  0.0,   0.0, // Vértice 15
             
             // BOTTOM 
-            -0.50,  -0.50, -0.50,   0.5, 0.7,     0.0, -1.0,   0.0, // Vértice 16
-            -0.50,  -0.50,  0.50,   0.7, 0.7,     0.0, -1.0,   0.0, // Vértice 17
-             0.50,  -0.50,  0.50,   0.7, 1.0,     0.0, -1.0,   0.0, // Vértice 18
-             0.50,  -0.50, -0.50,   0.5, 1.0,     0.0, -1.0,   0.0, // Vértice 19
+            -0.50,  -0.50, -0.50,   0.5, 0.7,    0.0, -1.0,   0.0, // Vértice 16
+            -0.50,  -0.50,  0.50,   0.7, 0.7,    0.0, -1.0,   0.0, // Vértice 17
+             0.50,  -0.50,  0.50,   0.7, 1.0,    0.0, -1.0,   0.0, // Vértice 18
+             0.50,  -0.50, -0.50,   0.5, 1.0,    0.0, -1.0,   0.0, // Vértice 19
             
             // TOP
-            -0.75,   0.50, -0.75,   0.0, 0.0,     0.0, -1.0,   0.0, // Vértice 20
-            -0.75,   0.50,  0.75,   1.0, 0.5,     0.0, -1.0,   0.0, // Vértice 21
-             0.75,   0.50,  0.75,   1.0, 0.0,     0.0, -1.0,   0.0, // Vértice 22
-             0.75,   0.50, -0.75,   0.0, 0.5,     0.0, -1.0,   0.0, // Vértice 23
+            -0.75,   0.50, -0.75,   0.0, 0.0,    0.0, -1.0,   0.0, // Vértice 20
+            -0.75,   0.50,  0.75,   1.0, 0.5,    0.0, -1.0,   0.0, // Vértice 21
+             0.75,   0.50,  0.75,   1.0, 0.0,    0.0, -1.0,   0.0, // Vértice 22
+             0.75,   0.50, -0.75,   0.0, 0.5,    0.0, -1.0,   0.0, // Vértice 23
 
         // PYRAMID POINTS
              0.00,   1.00,  0.00,   0.5, 0.5,    0.0,  1.0,   0.0, // Vértice 24
@@ -439,6 +460,7 @@
         gl.uniformMatrix4fv(vMatrixUniform, false, vMatrix);
 
         // LUZ DIRECCIONAL WRITE "u_LightColor"
+        console.log(DIRECTIONAL_LIGHT_COLOR)
         var u_LightColor = gl.getUniformLocation(gl.program, "u_LightColor");
         gl.uniform3fv(u_LightColor, DIRECTIONAL_LIGHT_COLOR);
 
@@ -447,8 +469,8 @@
             y_light = document.getElementById("y").value,
             z_light = document.getElementById("z").value,
             lightDirection = [x_light, y_light, z_light],
-            u_lightPosition = gl.getUniformLocation(gl.program, "u_lightPosition");
-        gl.uniform3fv(u_lightPosition, lightDirection);
+            u_LightDirection = gl.getUniformLocation(gl.program, "u_LightDirection");
+        gl.uniform3fv(u_LightDirection, lightDirection);
 
         // LUZ AMBIENTE WRITE "u_AmbientLight"
         var u_AmbientLight = gl.getUniformLocation(gl.program, "u_AmbientLight");
